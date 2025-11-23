@@ -3,7 +3,7 @@ from .views import EvaluationCreateView, EvaluationListView, LastEvaluationForSt
 
 urlpatterns = [
     path('create/', EvaluationCreateView.as_view(), name='evaluation-create'),
-    path('evaluationlist/', EvaluationListView.as_view(), name='evaluation-list'),
+    path('evaluation-list/', EvaluationListView.as_view(), name='evaluation-list'),
     path('last/<str:student_id>/', LastEvaluationForStudentView.as_view(), name='evaluation-last'),
     path('search-post/', EvaluationSearchPostView.as_view(), name='evaluation-serch-post')
 ]
