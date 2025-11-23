@@ -5,6 +5,7 @@ from .models import Evaluation
 from .serializers import EvaluationSerializer
 import os, requests
 from django.utils import timezone
+from django.db.models import Q
 
 FORWARD_BACKEND_URL = os.getenv('FORWARD_BACKEND_URL')
 BACKEND_API_TOKEN = os.getenv('BACKEND_API_TOKEN')
@@ -54,3 +55,28 @@ class LastEvaluationForStudentView(APIView):
             serializer = EvaluationSerializer(evaluation)
             return Response(serializer.data)
         return Response({"error": "No evaluation found for this student"}, status=404)
+    
+# Search evaluations by student number 
+class EvaluationSearchPostView(APIView):
+    def post(self, request):
+        student_number = request.data.get("student_number")
+
+        if not student_number:
+            return Response(
+                {"error": "Please provide student number"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        evaluations = Evaluation.objects.filter(
+            Q(student__student_id__icontains=student_number) |
+            Q(student_id_raw__icontains=student_number)
+        ).order_by('-created_at')
+
+        if not evaluations.exists():
+            return Response(
+                {"message": "No evaluations found for this student number"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = EvaluationSerializer(evaluations, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
