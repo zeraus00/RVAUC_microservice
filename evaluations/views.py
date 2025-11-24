@@ -10,7 +10,8 @@ from django.db.models import Q
 FORWARD_BACKEND_URL = os.getenv('FORWARD_BACKEND_URL')
 BACKEND_API_TOKEN = os.getenv('BACKEND_API_TOKEN')
 
-# POST: create evaluation manually
+
+# POST: Create evaluation
 class EvaluationCreateView(generics.CreateAPIView):
     queryset = Evaluation.objects.all()
     serializer_class = EvaluationSerializer
@@ -35,35 +36,52 @@ class EvaluationCreateView(generics.CreateAPIView):
                 headers = {'Content-Type': 'application/json'}
                 if BACKEND_API_TOKEN:
                     headers['Authorization'] = f"Bearer {BACKEND_API_TOKEN}"
-                resp = requests.post(FORWARD_BACKEND_URL, json=payload, headers=headers, timeout=5)
+
+                resp = requests.post(
+                    FORWARD_BACKEND_URL,
+                    json=payload,
+                    headers=headers,
+                    timeout=5
+                )
                 resp.raise_for_status()
                 eval_obj.forwarded = True
                 eval_obj.save()
+
             except Exception as e:
                 print("Forwarding failed:", e)
 
-# GET: list all evaluations
+
+# GET: List all evaluations
 class EvaluationListView(generics.ListAPIView):
     queryset = Evaluation.objects.all().order_by('-created_at')
     serializer_class = EvaluationSerializer
 
-# GET: latest evaluation for a specific student
+
+# GET: Last evaluation for a specific student
 class LastEvaluationForStudentView(APIView):
     def get(self, request, student_id):
-        evaluation = Evaluation.objects.filter(student__student_id=student_id).order_by('-created_at').first()
-        if evaluation:
-            serializer = EvaluationSerializer(evaluation)
-            return Response(serializer.data)
-        return Response({"error": "No evaluation found for this student"}, status=404)
-    
-# Search evaluations by student number 
+        evaluation = Evaluation.objects.filter(
+            student__student_id=student_id
+        ).order_by('-created_at').first()
+
+        if not evaluation:
+            return Response(
+                {"error": "No evaluation found for this student"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = EvaluationSerializer(evaluation)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+# POST: Search evaluations by student number
 class EvaluationSearchPostView(APIView):
     def post(self, request):
         student_number = request.data.get("student_number")
 
         if not student_number:
             return Response(
-                {"error": "Please provide student number"},
+                {"error": "Please provide student_number"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
