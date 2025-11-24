@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Evaluation, Student
 
-
 class EvaluationSerializer(serializers.ModelSerializer):
     student_id = serializers.CharField(write_only=True, required=False, allow_null=True)
 
@@ -20,7 +19,6 @@ class EvaluationSerializer(serializers.ModelSerializer):
             'forwarded',
             'created_at'
         ]
-
         read_only_fields = [
             'id',
             'student',
@@ -45,7 +43,6 @@ class EvaluationSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         student_number = self.initial_data.get("student_id") or validated_data.get("student_id_raw")
 
-        # Create/find student
         student = None
         if student_number:
             student, _ = Student.objects.get_or_create(student_id=student_number)
@@ -53,10 +50,8 @@ class EvaluationSerializer(serializers.ModelSerializer):
         validated_data['student'] = student
         validated_data.pop('student_id', None)
 
-        validated_data['gender'] = "unknown"
         eval_obj = super().create(validated_data)
 
-        # Compute results
         completeness, missing, score, inferred_gender = eval_obj.compute_completeness()
 
         eval_obj.completeness = completeness
@@ -65,5 +60,4 @@ class EvaluationSerializer(serializers.ModelSerializer):
         eval_obj.gender = inferred_gender
 
         eval_obj.save()
-
         return eval_obj
