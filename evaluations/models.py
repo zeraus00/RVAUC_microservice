@@ -12,8 +12,8 @@ class Evaluation(models.Model):
     GENDER_CHOICES = (('male','Male'), ('female','Female'), ('unknown','Unknown'))
 
     student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True)
-    student_id_raw = models.CharField(max_length=256, blank=True, default='')
-    gender = models.CharField(max_length=16, choices=GENDER_CHOICES, default='unknown')
+    student_id_raw = models.CharField(max_length=256)
+    gender = models.CharField(max_length=16, default='', blank=True)
     detected_items = models.JSONField(default=dict)
 
     completeness = models.BooleanField(default=False)
@@ -34,52 +34,31 @@ class Evaluation(models.Model):
             return 'male'
         if female_cues and not male_cues:
             return 'female'
-        return 'unknown'
+        return 'None'
 
     def compute_completeness(self, use_inference_if_unknown=True):
         d = self.detected_items or {}
-        used_gender = self.gender
-        if used_gender == 'unknown' and use_inference_if_unknown:
-            inferred = self.infer_gender_from_items()
-            if inferred != 'unknown':
-                used_gender = inferred
+        gender = self.infer_gender_from_items()
 
-        missing = []
-        if used_gender == 'male':
-            if not (d.get('polo') and d.get('logo')):
-                if not d.get('polo'):
-                    missing.append('polo')
-                if not d.get('logo'):
-                    missing.append('logo')
-            if not d.get('black_slacks'):
-                missing.append('black_slacks')
-            if not d.get('black_shoes'):
-                missing.append('black_shoes')
-            required_count = 4
+        # Use inferred gender if original is unknown
+        if use_inference_if_unknown and self.gender == "unknown":
+            self.gender = gender
 
-        elif used_gender == 'female':
-            if not (d.get('blouse') and d.get('logo')):
-                if not d.get('blouse'):
-                    missing.append('blouse')
-                if not d.get('logo'):
-                    missing.append('logo')
-            if not d.get('green_belt'):
-                missing.append('green_belt')
-            if not d.get('skirt'):
-                missing.append('skirt')
-            if not d.get('black_shoes'):
-                missing.append('black_shoes')
-            required_count = 5
-
+        # REQUIREMENTS
+        if self.gender == "male":
+            required = {"polo", "logo", "black_slacks", "black_shoes"}
+        elif self.gender == "female":
+            required = {"blouse", "logo", "green_belt", "skirt", "black_shoes"}
         else:
-            if not d.get('logo'):
-                missing.append('logo')
-            if not d.get('black_shoes'):
-                missing.append('black_shoes')
-            required_count = 2
+            # gender unknown, cannot compute proper completeness
+            return False, [], 0.0, self.gender
+
+        detected_set = {k for k, v in d.items() if v is True}
+
+        missing = sorted(list(required - detected_set))
 
         completeness = (len(missing) == 0)
-        detected_count = max(0, required_count - len(missing))
-        score = detected_count / required_count if required_count else 0.0
 
-        return completeness, missing, score, used_gender
+        score = (len(required) - len(missing)) / len(required)
+
+        return completeness, missing, score, self.gender
