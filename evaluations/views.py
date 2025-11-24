@@ -11,7 +11,6 @@ FORWARD_BACKEND_URL = os.getenv('FORWARD_BACKEND_URL')
 BACKEND_API_TOKEN = os.getenv('BACKEND_API_TOKEN')
 
 
-# POST: Create evaluation
 class EvaluationCreateView(generics.CreateAPIView):
     queryset = Evaluation.objects.all()
     serializer_class = EvaluationSerializer
@@ -51,13 +50,11 @@ class EvaluationCreateView(generics.CreateAPIView):
                 print("Forwarding failed:", e)
 
 
-# GET: List all evaluations
 class EvaluationListView(generics.ListAPIView):
     queryset = Evaluation.objects.all().order_by('-created_at')
     serializer_class = EvaluationSerializer
 
 
-# GET: Last evaluation for a specific student
 class LastEvaluationForStudentView(APIView):
     def get(self, request, student_id):
         evaluation = Evaluation.objects.filter(
@@ -74,7 +71,6 @@ class LastEvaluationForStudentView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-# POST: Search evaluations by student number
 class EvaluationSearchPostView(APIView):
     def post(self, request):
         student_number = request.data.get("student_number")
