@@ -29,8 +29,8 @@ class Evaluation(models.Model):
     # Infer gender based on detected items
     def infer_gender_from_items(self):
         d = self.detected_items or {}
-        male_cues = bool(d.get('polo')) and bool(d.get('black_slacks'))
-        female_cues = bool(d.get('blouse')) and bool(d.get('skirt'))
+        male_cues = bool(d.get('polo')) or bool(d.get('black_slacks'))
+        female_cues = bool(d.get('blouse')) or bool(d.get('skirt'))
 
         if male_cues and not female_cues:
             return 'male'
