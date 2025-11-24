@@ -8,6 +8,7 @@ class Student(models.Model):
     def __str__(self):
         return f"{self.student_id} - {self.name or 'Unknown'}"
 
+
 class Evaluation(models.Model):
     GENDER_CHOICES = (('male','Male'), ('female','Female'), ('unknown','Unknown'))
 
@@ -25,6 +26,7 @@ class Evaluation(models.Model):
     def __str__(self):
         return f"Eval {self.id} for {self.student_id_raw} at {self.created_at.isoformat()}"
 
+    # Infer gender based on detected items
     def infer_gender_from_items(self):
         d = self.detected_items or {}
         male_cues = bool(d.get('polo')) and bool(d.get('black_slacks'))
@@ -34,31 +36,41 @@ class Evaluation(models.Model):
             return 'male'
         if female_cues and not male_cues:
             return 'female'
-        return 'None'
+        return 'unknown'
 
+    # Compute completeness, missing items, and score
     def compute_completeness(self, use_inference_if_unknown=True):
         d = self.detected_items or {}
-        gender = self.infer_gender_from_items()
 
-        # Use inferred gender if original is unknown
-        if use_inference_if_unknown and self.gender == "unknown":
-            self.gender = gender
+        # Infer gender
+        inferred_gender = self.infer_gender_from_items()
+        if use_inference_if_unknown:
+            self.gender = inferred_gender
 
-        # REQUIREMENTS
+        # Required items based on gender
         if self.gender == "male":
-            required = {"polo", "logo", "black_slacks", "black_shoes"}
+            required = ["polo", "logo", "black_slacks", "black_shoes"]
         elif self.gender == "female":
-            required = {"blouse", "logo", "green_belt", "skirt", "black_shoes"}
+            required = ["blouse", "logo", "green_belt", "skirt", "black_shoes"]
         else:
-            # gender unknown, cannot compute proper completeness
             return False, [], 0.0, self.gender
 
-        detected_set = {k for k, v in d.items() if v is True}
+        # Detected items that are True
+        detected_set = []
+        for item, value in d.items():
+            if value == True:
+                detected_set.append(item)
 
-        missing = sorted(list(required - detected_set))
+        # Compute missing items: missing required OR any detected False
+        missing = []
+        for item in required:
+            if item not in detected_set:
+                missing.append(item)
+        for item, value in d.items():
+            if value == False and item not in missing:
+                missing.append(item)
 
-        completeness = (len(missing) == 0)
-
-        score = (len(required) - len(missing)) / len(required)
+        completeness = len(missing) == 0
+        score = (len(required) - len([m for m in missing if m in required])) / len(required) if len(required) > 0 else 0.0
 
         return completeness, missing, score, self.gender
