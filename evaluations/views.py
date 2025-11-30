@@ -11,7 +11,7 @@ FORWARD_BACKEND_URL = os.getenv('FORWARD_BACKEND_URL')
 BACKEND_API_TOKEN = os.getenv('BACKEND_API_TOKEN')
 
 
-class EvaluationCreateView(generics.CreateAPIView):
+class EvaluationCreateView(generics.ListCreateAPIView):
     queryset = Evaluation.objects.all()
     serializer_class = EvaluationSerializer
 
@@ -58,39 +58,14 @@ class EvaluationListView(generics.ListAPIView):
 class LastEvaluationForStudentView(APIView):
     def get(self, request, student_id):
         evaluation = Evaluation.objects.filter(
-            student__student_id=student_id
+            Q(student__student_id=student_id) | Q(student_id_raw=student_id)
         ).order_by('-created_at').first()
 
         if not evaluation:
             return Response(
-                {"error": "No evaluation found for this student"},
+                {"error": f"No evaluation found for this student: {student_id}"},
                 status=status.HTTP_404_NOT_FOUND
             )
 
         serializer = EvaluationSerializer(evaluation)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class EvaluationSearchPostView(APIView):
-    def post(self, request):
-        student_number = request.data.get("student_number")
-
-        if not student_number:
-            return Response(
-                {"error": "Please provide student_number"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        evaluations = Evaluation.objects.filter(
-            Q(student__student_id__icontains=student_number) |
-            Q(student_id_raw__icontains=student_number)
-        ).order_by('-created_at')
-
-        if not evaluations.exists():
-            return Response(
-                {"message": "No evaluations found for this student number"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        serializer = EvaluationSerializer(evaluations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
