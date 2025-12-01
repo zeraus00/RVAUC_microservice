@@ -47,16 +47,33 @@ body, html, #root {
   border-radius: 6px;
 }
 
+.panel-box-details {
+  background-color: #8e8e8e;
+  border-radius: 6px;
+  color: white;
+  height: 100px;
+}
+
 .panel-box {
   background: #8e8e8e;
   padding: 15px;
   border-radius: 6px;
   color: white;
   text-align: center;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.panel-box.student-details {
+  height: 200px;
+  text-align: center;
+  justify-content: center;
 }
 
 .student-details p {
-  margin: 2px 0;
+  margin: 5px 0;
 }
 
 .button-row {
