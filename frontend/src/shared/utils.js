@@ -1,19 +1,11 @@
 import axios from "axios";
-import jwt from "jsonwebtoken";
 import { jwtDecode } from "jwt-decode";
 
-const createToken = () => {
-  const STATION_SECRET =
-    "1d6020fbd5de871d2eacf3726f73f7e267d25087e8aba1e984020cc98703ee1404cc03082583ab4311d6f4a2fee69817c2e1b08d472358adfa68cde57ec0f30b";
-  const token = jwt.sign({ stationName: "station1" }, STATION_SECRET, {
-    expiresIn: "1m",
-  });
-
-  return token;
-};
+const rvaucmsToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdGF0aW9uTmFtZSI6InN0YXRpb24xIiwiaWF0IjoxNzY0NzAwNDc1LCJleHAiOjIwODAyNzY0NzV9.pXbCchvsc9uP5E6bbMzcHQZHHL90yFdcCijTKp7oHgM";
 
 export const rvaucmsClient = axios.create({
-  baseURL: "http://localhost:2620/session-broker/sign-in",
+  baseURL: "http://localhost:2620/session-broker/get-active-session",
   withCredentials: true,
 });
 
@@ -22,7 +14,7 @@ rvaucmsClient.interceptors.request.use(
     // means the request not a retry, it's the first attempt.
     if (!config.headers["Authorization"]) {
       //  use a new token to make the request.
-      config.headers["Authorization"] = `Bearer ${createToken()}`;
+      config.headers["Authorization"] = `Bearer ${rvaucmsToken}`;
     }
     return config;
   },
@@ -31,11 +23,11 @@ rvaucmsClient.interceptors.request.use(
   }
 );
 
-export const getSession = async () => {
+export const sessionBroker = async () => {
+  console.log("retrieving session...");
+
   const data = await rvaucmsClient
-    .get("/session-broker", {
-      params: { stationName: "station1" },
-    })
+    .get("/station1")
     .then((response) => response.data)
     .catch((error) => {
       if (error.response) return error.response.data;

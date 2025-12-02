@@ -1,7 +1,7 @@
 import "./App.css";
 // FIX 1: Ensure useRef, useState, and useCallback are imported
 import { useEffect, useState, useRef, useCallback } from "react";
-import { getSession, rvaucmsClient } from "./shared/utils";
+import { sessionBroker } from "./shared/utils";
 
 function App() {
   // --- Refs ---
@@ -33,25 +33,14 @@ function App() {
 
   // --- 0. Session Polling ---
   useEffect(() => {
-    const getSession = async () => {
-      const data = await getSession();
-      if (data.success) {
-        setStudentId(data.result.studentNumber);
-      } else {
-        console.error(data.message);
-        setStudentId("");
-      }
-    };
+    if (studentId) return;
 
-    const poll = async () => {
-      while (!studentId) {
-        await getSession();
+    const interval = setInterval(async () => {
+      const data = await sessionBroker();
+      if (data.success) setStudentId(data.result.studentNumber);
+    }, 3000);
 
-        await new Promise((resolve) => setTimeout(resolve, 3000));
-      }
-    };
-
-    poll();
+    return () => clearInterval(interval);
   }, [studentId]);
 
   // --- 1. WebSocket Connection ---
