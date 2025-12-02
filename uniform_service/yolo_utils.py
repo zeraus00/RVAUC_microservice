@@ -2,7 +2,7 @@ import os
 import cv2
 import base64
 import numpy as np
-from ultralytics import YOLO
+from ultralytics import YOLO # type:ignore
 from pathlib import Path
 
 # FIX: Calculate path relative to this file (avoiding Django settings errors on import)
