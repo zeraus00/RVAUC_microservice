@@ -323,8 +323,10 @@ function App() {
               <button
                 className="confirm-btn"
                 onClick={handleVerify}
-                disabled={!isScanning || isVerifying}
-                style={{ opacity: !isScanning || isVerifying ? 0.5 : 1 }}
+                disabled={!studentId || !isScanning || isVerifying}
+                style={{
+                  opacity: !studentId || !isScanning || isVerifying ? 0.5 : 1,
+                }}
               >
                 Verify
               </button>
