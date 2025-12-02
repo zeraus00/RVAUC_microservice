@@ -11,6 +11,7 @@ class Student(models.Model):
 
 class Evaluation(models.Model):
     GENDER_CHOICES = (('male','Male'), ('female','Female'), ('unknown','Unknown'))
+    id = models.AutoField(primary_key=True)
 
     student = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True)
     student_id_raw = models.CharField(max_length=256)
