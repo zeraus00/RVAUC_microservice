@@ -1,7 +1,12 @@
-from dataclasses import dataclass
 from typing import Any, TypedDict
 from pydantic import BaseModel
+from enums import UniformTypes
 
+
+class StudentDetails(BaseModel):
+    student_number: str
+    uniform_type: UniformTypes = UniformTypes.type_a_male
+    term_id: int = 1
 
 '''
     Imported schemas from the main server. 
