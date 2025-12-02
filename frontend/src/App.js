@@ -1,5 +1,3 @@
-
-Charles
 import './App.css';
 import { useEffect } from 'react';
 
