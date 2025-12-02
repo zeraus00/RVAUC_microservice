@@ -1,6 +1,6 @@
 from typing import Any, TypedDict
 from pydantic import BaseModel
-from enums import UniformTypes
+from rvauc_ms.enums import UniformTypes
 
 
 class StudentDetails(BaseModel):
@@ -36,7 +36,7 @@ class TokenPayload(BaseModel):
     role: str
     studentNumber: str
     department: str
-    yearLevel: str
+    yearLevel: int
     block: str
 
 class ApiResponse(BaseModel):
@@ -44,5 +44,5 @@ class ApiResponse(BaseModel):
     The api response type of RvaucMs server
     '''
     success: bool
-    message: str
+    message: str = ""
     result: Any = None

@@ -1,7 +1,7 @@
 from typing import Mapping
 import jwt
-from enums import UniformTypes
-from schemas import ComplianceRecord, StudentDetails, TokenPayload 
+from rvauc_ms.enums import UniformTypes
+from rvauc_ms.schemas import ComplianceRecord, StudentDetails, TokenPayload 
 
 LabelMappers: Mapping[UniformTypes, Mapping[str, str]] = {
     UniformTypes.type_a_male: {

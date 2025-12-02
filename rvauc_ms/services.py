@@ -1,7 +1,7 @@
 import os
 import httpx
-from schemas import ApiResponse, StudentDetails
-from utils import decode_rvauc_ms_jwt, scan_to_dto
+from rvauc_ms.schemas import ApiResponse, StudentDetails
+from rvauc_ms.utils import decode_rvauc_ms_jwt, scan_to_dto
 
 def get_environment() -> str:
     environment = os.environ.get("ENVIRONMENT")
