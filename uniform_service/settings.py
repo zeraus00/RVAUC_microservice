@@ -41,8 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'rest_framework',
+    'channels',
+
     'corsheaders',
+    'detector',
     'evaluations',
 ]
 
@@ -58,6 +62,16 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 ROOT_URLCONF = 'uniform_service.urls'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
 
 TEMPLATES = [
     {
@@ -103,6 +117,10 @@ REST_FRAMEWORK = {
     ],
 }
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+
 FORWARD_BACKEND_URL = os.getenv('FORWARD_BACKEND_URL')
 BACKEND_API_TOKEN = os.getenv('BACKEND_API_TOKEN')
 
@@ -123,6 +141,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "frontend/build/static"
+]
+
+TEMPLATES[0]["DIRS"] = [
+    BASE_DIR / "frontend/build"
+]
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
