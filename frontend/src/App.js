@@ -18,6 +18,11 @@ function App() {
   const [isScanning, setIsScanning] = useState(true); // Scanning defaults to ON
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(null);
+  const [statusDisplay, setStatusDisplay] = useState({
+    text: "Ready.",
+    sub: "System idle.",
+    color: "white",
+  });
 
   // Removed redundant 'boxes' state as it's only used internally by drawBoxes
 
@@ -107,25 +112,6 @@ function App() {
     return () => clearInterval(interval);
   }, [isScanning, sendFrame]); // Added sendFrame to dependencies
 
-  // --- 4. Verify countdown (finalizing evaluation)
-  useEffect(() => {
-    const beginCountdown = async () => {
-      if (!isVerifying) return;
-
-      const countdown = 5;
-
-      for (let i = countdown; i > 0; i--) {
-        setCountdown(i);
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-
-      setCountdown(null);
-      setIsVerifying(false);
-    };
-
-    beginCountdown();
-  }, [isVerifying]);
-
   // --- Helper Functions ---
 
   const drawBoxes = (boxes) => {
@@ -175,7 +161,13 @@ function App() {
     }
 
     setIsVerifying(true);
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+
+    const countdown = 5;
+
+    for (let i = countdown; i > 0; i--) {
+      setCountdown(i);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
 
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(
@@ -188,11 +180,10 @@ function App() {
     } else {
       console.error("System not connected.");
     }
-
-    setIsVerifying(false);
   };
 
   const handleRetry = () => {
+    setIsVerifying(false);
     setEvaluationResult(null);
     setDetectedItems({});
     setIsScanning(true); // Resume scanning
@@ -211,42 +202,43 @@ function App() {
   };
 
   // --- Render Helpers ---
+  useEffect(() => {
+    const getEvaluationStatus = () => {
+      if (!isScanning && studentId && !evaluationResult)
+        return {
+          text: "Scanning Paused",
+          sub: "Press Retry to scan again.",
+          color: "yellow",
+        };
+      if (!evaluationResult)
+        return {
+          text: isVerifying
+            ? "VERIFYING IN..." + countdown
+            : isScanning
+            ? "SCANNING"
+            : "Ready",
+          sub: isVerifying
+            ? "Verifying detection..."
+            : isScanning
+            ? "Real-time detection active."
+            : "System Idle.",
+          color: isScanning ? "#60a5fa" : "white",
+        };
 
-  const getEvaluationStatus = () => {
-    if (!isScanning && studentId && !evaluationResult)
-      return {
-        text: "Scanning Paused",
-        sub: "Press Retry to scan again.",
-        color: "yellow",
-      };
-    if (!evaluationResult)
-      return {
-        text: isScanning
-          ? "SCANNING"
-          : isVerifying
-          ? "VERIFYING IN..." + countdown
-          : "Ready",
-        sub: isScanning
-          ? "Real-time detection active."
-          : isVerifying
-          ? "Verifying detection..."
-          : "System Idle.",
-        color: isScanning ? "#60a5fa" : "white",
-      };
+      if (evaluationResult.completeness) {
+        return { text: "COMPLETE", sub: "Uniform Compliant", color: "#4ade80" }; // Green
+      } else {
+        const missingText = evaluationResult.missing.join(", ");
+        return {
+          text: "INCOMPLETE",
+          sub: `Missing: ${missingText}`,
+          color: "#f87171",
+        }; // Red
+      }
+    };
 
-    if (evaluationResult.completeness) {
-      return { text: "COMPLETE", sub: "Uniform Compliant", color: "#4ade80" }; // Green
-    } else {
-      const missingText = evaluationResult.missing.join(", ");
-      return {
-        text: "INCOMPLETE",
-        sub: `Missing: ${missingText}`,
-        color: "#f87171",
-      }; // Red
-    }
-  };
-
-  const statusDisplay = getEvaluationStatus();
+    setStatusDisplay(getEvaluationStatus());
+  }, [isScanning, isVerifying, studentId, evaluationResult, countdown]);
 
   return (
     <>
@@ -331,8 +323,8 @@ function App() {
               <button
                 className="confirm-btn"
                 onClick={handleVerify}
-                disabled={!isScanning}
-                style={{ opacity: !isScanning ? 0.5 : 1 }}
+                disabled={!isScanning || isVerifying}
+                style={{ opacity: !isScanning || isVerifying ? 0.5 : 1 }}
               >
                 Verify
               </button>
