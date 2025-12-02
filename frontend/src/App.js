@@ -12,6 +12,7 @@ function App() {
   // --- State ---
   const [detectedItems, setDetectedItems] = useState({});
   const [studentId, setStudentId] = useState("");
+  const [token, setToken] = useState("");
   // Added Name state
   const [studentName, setStudentName] = useState("Waiting for login...");
   const [evaluationResult, setEvaluationResult] = useState(null);
@@ -37,7 +38,10 @@ function App() {
 
     const interval = setInterval(async () => {
       const data = await sessionBroker();
-      if (data.success) setStudentId(data.result.studentNumber);
+      if (data.success) {
+        setToken(data.result.token);
+        setStudentId(data.result.decoded.studentNumber);
+      }
     }, 3000);
 
     return () => clearInterval(interval);
@@ -186,7 +190,7 @@ function App() {
       wsRef.current.send(
         JSON.stringify({
           action: "verify",
-          student_id: studentId,
+          access_token: token,
           detected_items: detectedItems,
         })
       );
@@ -238,10 +242,10 @@ function App() {
           color: isScanning ? "#60a5fa" : "white",
         };
 
-      if (evaluationResult.completeness) {
+      if (evaluationResult.result.isCompliant) {
         return { text: "COMPLETE", sub: "Uniform Compliant", color: "#4ade80" }; // Green
       } else {
-        const missingText = evaluationResult.missing.join(", ");
+        const missingText = evaluationResult.result.reasons.join(", ");
         return {
           text: "INCOMPLETE",
           sub: `Missing: ${missingText}`,

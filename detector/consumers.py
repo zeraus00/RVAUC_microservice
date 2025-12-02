@@ -4,6 +4,7 @@ from uniform_service.yolo_utils import image_from_base64_bytes, run_yolo_on_cv_i
 from channels.db import database_sync_to_async
 from evaluations.models import Evaluation, Student
 from django.utils import timezone
+from rvauc_ms import services
 
 class YOLODetectionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -43,15 +44,15 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
         # --- FLOW 2: Verification (Save to DB) ---
         elif action == "verify":
-            student_id = data.get("student_id", "")
+            token = data.get("access_token", "")
             detected_items = data.get("detected_items", {})
-            
-            # Save evaluation to database
-            eval_data = await self.create_evaluation_entry(student_id, detected_items)
+
+            # Send evaluation to rvauc ms server
+            eval_data = await services.RvaucMsService.new_record(token, detected_items)
 
             await self.send(text_data=json.dumps({
                 "type": "verify_result",
-                "evaluation": eval_data
+                "evaluation": eval_data.__dict__
             }))
 
     @database_sync_to_async

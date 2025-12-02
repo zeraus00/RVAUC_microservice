@@ -38,6 +38,6 @@ export const sessionBroker = async () => {
   if (data.success) {
     const token = data.result;
     const decoded = jwtDecode(token);
-    return { success: true, result: decoded };
+    return { success: true, result: { token, decoded } };
   } else return data;
 };
