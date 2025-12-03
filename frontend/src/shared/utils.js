@@ -47,7 +47,7 @@ const decodeToken = (data) => {
   }
 };
 
-export const manualSignIn = async (studentNumber) => {
+export const manualLogIn = async (studentNumber) => {
   console.log("manual sign in for student: " + studentNumber);
 
   const data = await sessionBrokerClient
@@ -77,4 +77,16 @@ export const sessionBroker = async () => {
     );
 
   return decodeToken(data);
+};
+
+export const logOut = async () => {
+  console.log("signing out...");
+
+  const data = await sessionBrokerClient
+    .post("/sign-out/" + stationName)
+    .then((response) => response.data)
+    .catch(
+      (error) =>
+        error.response?.data ?? { success: false, message: error.message }
+    );
 };

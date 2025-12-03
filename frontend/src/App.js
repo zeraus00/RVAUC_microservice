@@ -1,7 +1,7 @@
 import "./App.css";
 // FIX 1: Ensure useRef, useState, and useCallback are imported
 import { useEffect, useState, useRef, useCallback } from "react";
-import { manualSignIn as manualLogIn, sessionBroker } from "./shared/utils";
+import { manualLogIn, sessionBroker, logOut } from "./shared/utils";
 
 function App() {
   // --- Refs ---
@@ -29,7 +29,6 @@ function App() {
   });
   const [isVerifyDisabled, setIsVerifyDisabled] = useState(false);
   const [isRetryDisabled, setIsRetryDisabled] = useState(false);
-  const [isLogInDisabled, setIsLogInDisabled] = useState(false);
 
   // Removed redundant 'boxes' state as it's only used internally by drawBoxes
 
@@ -164,10 +163,6 @@ function App() {
       wsStatus === "Disconnected" || !token || !isVerifyDisabled;
     setIsRetryDisabled(isRetryDisabled);
   }, [wsStatus, token, isVerifyDisabled]);
-  //  login button disabling
-  useEffect(() => {
-    setIsLogInDisabled(!!token);
-  }, [token]);
 
   // --- Helper Functions ---
 
@@ -263,6 +258,26 @@ function App() {
     setToken(token);
     setStudentName("Student No: " + decoded.studentNumber);
     console.log(`Manual login successful for ID: ${studentId}`);
+  };
+
+  const handleLogOut = async () => {
+    if (!token) return;
+    const logOut = await logOut();
+
+    /**
+     * setstudentid
+     * settoken
+     * setstudentname
+     * setevaluationresult
+     */
+    console.log(logOut.message);
+
+    if (logOut.success) {
+      setToken("");
+      setStudentId("");
+      setStudentName("Waiting for login...");
+      setEvaluationResult(null);
+    }
   };
 
   // --- Render Helpers ---
@@ -446,8 +461,10 @@ function App() {
             <button
               className="login-btn"
               onClick={handleLogin}
-              disabled={isLogInDisabled}
-              style={{ opacity: isLogInDisabled ? 0.5 : 1 }}
+              disabled={wsStatus === "Disconnected" || !!token}
+              style={{
+                opacity: wsStatus === "Disconnected" || !!token ? 0.5 : 1,
+              }}
             >
               Authenticate Log In
             </button>
