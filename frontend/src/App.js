@@ -17,7 +17,7 @@ function App() {
   const [studentName, setStudentName] = useState("Waiting for login...");
   const [evaluationResult, setEvaluationResult] = useState(null);
   const [wsStatus, setWsStatus] = useState("Disconnected");
-  const [isScanning, setIsScanning] = useState(true); // Scanning defaults to ON
+  const [isScanning, setIsScanning] = useState(false); // Scanning defaults to off
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(null);
 
@@ -48,6 +48,7 @@ function App() {
 
         if (data.success) {
           setToken(data.result.token);
+          setIsScanning(true);
           const { studentNumber } = data.result.decoded;
           setStudentId(studentNumber);
           setStudentName("Student No: " + studentNumber);
