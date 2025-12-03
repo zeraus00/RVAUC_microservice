@@ -1,7 +1,7 @@
 import "./App.css";
 // FIX 1: Ensure useRef, useState, and useCallback are imported
 import { useEffect, useState, useRef, useCallback } from "react";
-import { sessionBroker } from "./shared/utils";
+import { manualSignIn as manualLogIn, sessionBroker } from "./shared/utils";
 
 function App() {
   // --- Refs ---
@@ -139,17 +139,18 @@ function App() {
   useEffect(() => {
     const isVerifyDisabled =
       wsStatus === "Disconnected" ||
-      !studentId ||
+      !token ||
       !isScanning ||
       isVerifying ||
       evaluationResult;
     setIsVerifyDisabled(isVerifyDisabled);
-  }, [wsStatus, studentId, isScanning, isVerifying, evaluationResult]);
+  }, [wsStatus, token, isScanning, isVerifying, evaluationResult]);
   //  retry button disabling
   useEffect(() => {
-    const isRetryDisabled = wsStatus === "Disconnected" || !isVerifyDisabled;
+    const isRetryDisabled =
+      wsStatus === "Disconnected" || !token || !isVerifyDisabled;
     setIsRetryDisabled(isRetryDisabled);
-  }, [isVerifyDisabled]);
+  }, [wsStatus, token, isVerifyDisabled]);
   //  login button disabling
   useEffect(() => {
     setIsLogInDisabled(!!token);
@@ -233,15 +234,17 @@ function App() {
     clearCanvas();
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     // FIX: Use console.log instead of alert()
-    if (studentId) {
-      setStudentName(`Student #${studentId}`);
-      setIsScanning(true); // Start scanning on manual login
-      console.log(`Manual login successful for ID: ${studentId}`);
-    } else {
+    if (!studentId) return;
+
+    const logIn = await manualLogIn(studentId);
+    if (!logIn.success) {
+      setStudentName("Failed logging in: " + logIn.message);
       console.log("Please enter a Student ID to log in.");
+      return;
     }
+    console.log(`Manual login successful for ID: ${studentId}`);
   };
 
   // --- Render Helpers ---
