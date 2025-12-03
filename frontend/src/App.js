@@ -39,18 +39,29 @@ function App() {
 
   // --- 0. Session Polling ---
   useEffect(() => {
-    if (studentId) return;
+    if (token) return;
 
-    const interval = setInterval(async () => {
-      const data = await sessionBroker();
-      if (data.success) {
-        setToken(data.result.token);
-        setStudentId(data.result.decoded.studentNumber);
+    let cancelled = false;
+
+    const poll = async () => {
+      while (!cancelled && !token) {
+        const data = await sessionBroker();
+
+        if (data.success) {
+          setToken(data.result.token);
+          setStudentId(data.result.decoded.studentNumber);
+          return;
+        }
+
+        await new Promise((r) => setTimeout(r, 3000));
       }
-    }, 3000);
+    };
 
-    return () => clearInterval(interval);
-  }, [studentId]);
+    poll();
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   // --- 1. WebSocket Connection ---
   useEffect(() => {
