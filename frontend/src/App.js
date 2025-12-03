@@ -20,11 +20,15 @@ function App() {
   const [isScanning, setIsScanning] = useState(true); // Scanning defaults to ON
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(null);
+
+  //  --  Ui States --
   const [statusDisplay, setStatusDisplay] = useState({
     text: "Ready.",
     sub: "System idle.",
     color: "white",
   });
+  const [isVerifyDisabled, setIsVerifyDisabled] = useState(false);
+  const [isRetryDisabled, setIsRetryDisabled] = useState(false);
 
   // Removed redundant 'boxes' state as it's only used internally by drawBoxes
 
@@ -129,6 +133,23 @@ function App() {
     return () => clearInterval(interval);
   }, [isScanning, sendFrame]); // Added sendFrame to dependencies
 
+  // --- 4. UI Updates
+  // verify button disabling
+  useEffect(() => {
+    const isVerifyDisabled =
+      wsStatus === "Disconnected" ||
+      !studentId ||
+      !isScanning ||
+      isVerifying ||
+      evaluationResult;
+    setIsVerifyDisabled(isVerifyDisabled);
+  }, [wsStatus, studentId, isScanning, isVerifying, evaluationResult]);
+  //  retry button disabling
+  useEffect(() => {
+    const isRetryDisabled = wsStatus === "Disconnected" || !isVerifyDisabled;
+    setIsRetryDisabled(isRetryDisabled);
+  }, [isVerifyDisabled]);
+
   // --- Helper Functions ---
 
   const drawBoxes = (boxes) => {
@@ -221,6 +242,14 @@ function App() {
   // --- Render Helpers ---
   useEffect(() => {
     const getEvaluationStatus = () => {
+      if (wsStatus == "Disconnected") {
+        return {
+          text: "Disconnected",
+          sub: "System is disconnected.",
+          color: "#f87171",
+        };
+      }
+
       if (!isScanning && studentId && !evaluationResult)
         return {
           text: "Scanning Paused",
@@ -269,7 +298,14 @@ function App() {
     };
 
     setStatusDisplay(getEvaluationStatus());
-  }, [isScanning, isVerifying, studentId, evaluationResult, countdown]);
+  }, [
+    wsStatus,
+    isScanning,
+    isVerifying,
+    studentId,
+    evaluationResult,
+    countdown,
+  ]);
 
   return (
     <>
@@ -354,15 +390,20 @@ function App() {
               <button
                 className="confirm-btn"
                 onClick={handleVerify}
-                disabled={!studentId || !isScanning || isVerifying}
+                disabled={isVerifyDisabled}
                 style={{
-                  opacity: !studentId || !isScanning || isVerifying ? 0.5 : 1,
+                  opacity: isVerifyDisabled ? 0.5 : 1,
                 }}
               >
                 Verify
               </button>
 
-              <button className="retry-btn" onClick={handleRetry}>
+              <button
+                className="retry-btn"
+                onClick={handleRetry}
+                disabled={isRetryDisabled}
+                style={{ opacity: isRetryDisabled ? 0.5 : 1 }}
+              >
                 Retry
               </button>
             </div>
