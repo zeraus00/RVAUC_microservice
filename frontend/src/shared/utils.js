@@ -1,6 +1,7 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 
+//  note session broker will eventually branch off to microservice
 const stationName = "station1";
 const sessionBrokerToken =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdGF0aW9uTmFtZSI6InN0YXRpb24xIiwiaWF0IjoxNzY0NzAwNDc1LCJleHAiOjIwODAyNzY0NzV9.pXbCchvsc9uP5E6bbMzcHQZHHL90yFdcCijTKp7oHgM";
@@ -24,24 +25,6 @@ sessionBrokerClient.interceptors.request.use(
   }
 );
 
-export const manualSignIn = async (studentNumber) => {
-  console.log("manual sign in for student: " + studentNumber);
-
-  const data = await sessionBrokerClient
-    .post("/sign-in", {
-      method: "studentNumber",
-      identifier: studentNumber,
-      stationName,
-    })
-    .then((response) => response.data)
-    .catch(
-      (error) =>
-        error.response?.data ?? { success: false, message: error.message }
-    );
-
-  return data;
-};
-
 /**
   * Decoded should be of the form:
     role: z.literal(Data.Records.roles.student),
@@ -64,7 +47,24 @@ const decodeToken = (data) => {
   }
 };
 
-//  note session broker will eventually branch off to microservice
+export const manualSignIn = async (studentNumber) => {
+  console.log("manual sign in for student: " + studentNumber);
+
+  const data = await sessionBrokerClient
+    .post("/sign-in", {
+      method: "studentNumber",
+      identifier: studentNumber,
+      stationName,
+    })
+    .then((response) => response.data)
+    .catch(
+      (error) =>
+        error.response?.data ?? { success: false, message: error.message }
+    );
+
+  return decodeToken(data);
+};
+
 export const sessionBroker = async () => {
   console.log("retrieving session...");
 

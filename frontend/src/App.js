@@ -49,7 +49,9 @@ function App() {
 
         if (data.success) {
           setToken(data.result.token);
-          setStudentId(data.result.decoded.studentNumber);
+          const { studentNumber } = data.result.decoded;
+          setStudentId(studentNumber);
+          setStudentName("Student No: " + studentNumber);
           return;
         }
 
@@ -255,6 +257,11 @@ function App() {
       console.log("Please enter a Student ID to log in.");
       return;
     }
+
+    const { token, decoded } = logIn.result;
+    console.log(JSON.stringify(decoded));
+    setToken(token);
+    setStudentName("Student No: " + decoded.studentNumber);
     console.log(`Manual login successful for ID: ${studentId}`);
   };
 
