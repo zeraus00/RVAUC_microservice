@@ -44,15 +44,28 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
         # --- FLOW 2: Verification (Save to DB) ---
         elif action == "verify":
+            student_id = data.get("student_id", "")
+            detected_items = data.get("detected_items", {})
+
+            # Send evaluation to rvauc ms server
+            eval_data = await self.create_evaluation_entry(student_id, detected_items)
+
+            await self.send(text_data=json.dumps({
+                "type": "verify_result",
+                "evaluation": eval_data
+            }))
+
+        # --- FLOW 3: Confirmation (Send to RVAUC-MS) ---
+        elif action == "confirm":
             token = data.get("access_token", "")
             detected_items = data.get("detected_items", {})
 
             # Send evaluation to rvauc ms server
-            eval_data = await services.RvaucMsService.new_record(token, detected_items)
+            new_record = await services.RvaucMsService.new_record(token, detected_items)
 
             await self.send(text_data=json.dumps({
-                "type": "verify_result",
-                "evaluation": eval_data.__dict__
+                "type": "confirm_result",
+                "evaluation": new_record.__dict__
             }))
 
     @database_sync_to_async

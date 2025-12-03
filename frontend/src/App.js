@@ -19,6 +19,8 @@ function App() {
   const [wsStatus, setWsStatus] = useState("Disconnected");
   const [isScanning, setIsScanning] = useState(false); // Scanning defaults to off
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [isConfirmed, setIsConfirmed] = useState(false);
   const [countdown, setCountdown] = useState(null);
 
   //  --  Ui States --
@@ -83,7 +85,8 @@ function App() {
         if (canvasRef.current && videoRef.current) {
           drawBoxes(data.boxes);
         }
-      } else if (data.type === "verify_result") {
+      } else {
+        //  handle verify / confirm actions
         console.log("Evaluation:", data.evaluation);
         setEvaluationResult(data.evaluation);
         setIsScanning(false); // Stop scanning on result
@@ -151,19 +154,15 @@ function App() {
   // verify button disabling
   useEffect(() => {
     const isVerifyDisabled =
-      wsStatus === "Disconnected" ||
-      !token ||
-      !isScanning ||
-      isVerifying ||
-      evaluationResult;
+      wsStatus === "Disconnected" || !token || isVerifying || evaluationResult;
     setIsVerifyDisabled(isVerifyDisabled);
-  }, [wsStatus, token, isScanning, isVerifying, evaluationResult]);
+  }, [wsStatus, token, isVerifying, evaluationResult]);
   //  retry button disabling
   useEffect(() => {
     const isRetryDisabled =
-      wsStatus === "Disconnected" || !token || !isVerifyDisabled;
+      wsStatus === "Disconnected" || !token || isConfirmed || !isVerifyDisabled;
     setIsRetryDisabled(isRetryDisabled);
-  }, [wsStatus, token, isVerifyDisabled]);
+  }, [wsStatus, token, isConfirmed, isVerifyDisabled]);
 
   // --- Helper Functions ---
 
@@ -205,10 +204,8 @@ function App() {
   // --- Button Handlers ---
 
   const handleVerify = async () => {
-    if (!studentId) {
-      console.error(
-        "Verification failed: Student ID is required for verification."
-      );
+    if (!token) {
+      console.error("User is not logged in.");
       // We will update the status box later to show this error
       return;
     }
@@ -226,17 +223,20 @@ function App() {
       wsRef.current.send(
         JSON.stringify({
           action: "verify",
-          access_token: token,
+          student_id: studentId,
           detected_items: detectedItems,
         })
       );
+      setIsConfirming(true);
     } else {
+      setIsVerifying(false);
       console.error("System not connected.");
     }
   };
 
   const handleRetry = () => {
     setIsVerifying(false);
+    setIsConfirming(false);
     setEvaluationResult(null);
     setDetectedItems({});
     setIsScanning(true); // Resume scanning
@@ -262,26 +262,37 @@ function App() {
   };
 
   const handleConfirm = async () => {
-    //  add confirm evaluation logic here
-    await handleLogOut();
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      setIsConfirming(false);
+      setIsConfirmed(true);
+      wsRef.current.send(
+        JSON.stringify({
+          action: "confirm",
+          access_token: token,
+          detected_items: detectedItems,
+        })
+      );
+    } else {
+      console.error("System not connected.");
+    }
   };
 
   const handleLogOut = async () => {
     if (!token) return;
     const logOut = await logOut();
 
-    /**
-     * setstudentid
-     * settoken
-     * setstudentname
-     * setevaluationresult
-     */
     console.log(logOut.message);
 
     if (logOut.success) {
       setToken("");
       setStudentId("");
       setStudentName("Waiting for login...");
+      setIsScanning(false);
+      setDetectedItems({});
+      clearCanvas();
+      setIsVerifying(false);
+      setIsConfirming(false);
+      setIsConfirmed(false);
       setEvaluationResult(null);
     }
   };
@@ -297,36 +308,46 @@ function App() {
         };
       }
 
-      if (!isScanning && studentId && !evaluationResult)
-        return {
-          text: "Scanning Paused",
-          sub: "Press Retry to scan again.",
-          color: "yellow",
-        };
+      // if (!isScanning && studentId && !evaluationResult)
+      //   return {
+      //     text: "Scanning Paused",
+      //     sub: "Press Retry to scan again.",
+      //     color: "yellow",
+      //   };
 
       if (evaluationResult) {
-        if (evaluationResult.success) {
-          if (evaluationResult.result.isCompliant) {
-            return {
-              text: "COMPLETE",
-              sub: "Uniform Compliant",
-              color: "#4ade80",
-            }; // Green
-          } else {
-            const missingText = evaluationResult.result.reasons.join(", ");
-            return {
-              text: "INCOMPLETE",
-              sub: `Missing: ${missingText}`,
-              color: "#f87171",
-            }; // Red
-          }
-        } else {
+        console.log(JSON.stringify(evaluationResult));
+        if (!isConfirmed) {
+          //  return type of the yolo microservice
+          const { completeness, missing } = evaluationResult;
           return {
-            text: "ERROR",
-            sub: "Failed evaluating: " + evaluationResult.message,
-            color: "#f87171",
+            text: completeness ? "COMPLETE" : "INCOMPLETE",
+            sub: completeness
+              ? "Uniform Compliant"
+              : "Missing: " + missing.join(", "),
+            color: completeness ? "#4ade80" : "#f87171",
           };
         }
+
+        //  return type of rvaucms
+        const { success, message } = evaluationResult;
+
+        if (!success)
+          return {
+            text: "ERROR",
+            sub: "Failed evaluating: " + message,
+            color: "#f87171",
+          };
+
+        const { isCompliant, reasons } = evaluationResult.result;
+
+        return {
+          text: isCompliant ? "COMPLETE" : "INCOMPLETE",
+          sub: isCompliant
+            ? "Uniform Compliant"
+            : "Missing: " + reasons?.join(", "),
+          color: isCompliant ? "#4ade80" : "#f87171",
+        };
       }
 
       return {
@@ -436,13 +457,23 @@ function App() {
             <div className="button-row">
               <button
                 className="confirm-btn"
-                onClick={handleVerify}
-                disabled={isVerifyDisabled}
+                onClick={isConfirming ? handleConfirm : handleVerify}
+                disabled={
+                  isConfirming ? false : isVerifyDisabled || isConfirmed
+                }
                 style={{
-                  opacity: isVerifyDisabled ? 0.5 : 1,
+                  opacity: isConfirming
+                    ? 1
+                    : isVerifyDisabled || isConfirmed
+                    ? 0.5
+                    : 1,
                 }}
               >
-                Verify
+                {isConfirmed
+                  ? "Confirmed"
+                  : isConfirming
+                  ? "Confirm"
+                  : "Verify"}
               </button>
 
               <button
