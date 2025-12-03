@@ -51,5 +51,6 @@ class RvaucMsService:
             
             return parsed
         except Exception as e:
-            return ApiResponse(success=False, message=str(e))
+            print("Failed storing record in method new_record: " +  str(e))
+            return ApiResponse(success=False, message="Failed storing new record.")
 
