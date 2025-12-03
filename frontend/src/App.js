@@ -227,31 +227,45 @@ function App() {
           sub: "Press Retry to scan again.",
           color: "yellow",
         };
-      if (!evaluationResult)
-        return {
-          text: isVerifying
-            ? "VERIFYING IN..." + countdown
-            : isScanning
-            ? "SCANNING"
-            : "Ready",
-          sub: isVerifying
-            ? "Verifying detection..."
-            : isScanning
-            ? "Real-time detection active."
-            : "System Idle.",
-          color: isScanning ? "#60a5fa" : "white",
-        };
 
-      if (evaluationResult.result.isCompliant) {
-        return { text: "COMPLETE", sub: "Uniform Compliant", color: "#4ade80" }; // Green
-      } else {
-        const missingText = evaluationResult.result.reasons.join(", ");
-        return {
-          text: "INCOMPLETE",
-          sub: `Missing: ${missingText}`,
-          color: "#f87171",
-        }; // Red
+      if (evaluationResult) {
+        if (evaluationResult.success) {
+          if (evaluationResult.result.isCompliant) {
+            return {
+              text: "COMPLETE",
+              sub: "Uniform Compliant",
+              color: "#4ade80",
+            }; // Green
+          } else {
+            const missingText = evaluationResult.result.reasons.join(", ");
+            return {
+              text: "INCOMPLETE",
+              sub: `Missing: ${missingText}`,
+              color: "#f87171",
+            }; // Red
+          }
+        } else {
+          return {
+            text: "ERROR",
+            sub: "Failed evaluating: " + evaluationResult.message,
+            color: "#f87171",
+          };
+        }
       }
+
+      return {
+        text: isVerifying
+          ? "VERIFYING IN..." + countdown
+          : isScanning
+          ? "SCANNING"
+          : "Ready",
+        sub: isVerifying
+          ? "Verifying detection..."
+          : isScanning
+          ? "Real-time detection active."
+          : "System Idle.",
+        color: isScanning ? "#60a5fa" : "white",
+      };
     };
 
     setStatusDisplay(getEvaluationStatus());
