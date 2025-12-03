@@ -45,10 +45,10 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
         # --- FLOW 2: Verification (Save to DB) ---
         elif action == "verify":
             student_id = data.get("student_id", "")
-            detected_items = data.get("detected_items", {})
+            self.last_detected = data.get("detected_items", {})
 
             # Send evaluation to rvauc ms server
-            eval_data = await self.create_evaluation_entry(student_id, detected_items)
+            eval_data = await self.create_evaluation_entry(student_id, self.last_detected)
 
             await self.send(text_data=json.dumps({
                 "type": "verify_result",
@@ -57,11 +57,12 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
         # --- FLOW 3: Confirmation (Send to RVAUC-MS) ---
         elif action == "confirm":
+            # todo: add validation, dapat verified muna before magconfirm
             token = data.get("access_token", "")
-            detected_items = data.get("detected_items", {})
+            # detected_items = data.get("detected_items", {})
 
             # Send evaluation to rvauc ms server
-            new_record = await services.RvaucMsService.new_record(token, detected_items)
+            new_record = await services.RvaucMsService.new_record(token, self.last_detected or {})
 
             await self.send(text_data=json.dumps({
                 "type": "confirm_result",
