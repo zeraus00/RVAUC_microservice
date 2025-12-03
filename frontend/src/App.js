@@ -13,6 +13,7 @@ function App() {
   const [detectedItems, setDetectedItems] = useState({});
   const [studentId, setStudentId] = useState("");
   const [token, setToken] = useState("");
+  const [payload, setPayload] = useState(null);
   // Added Name state
   const [studentName, setStudentName] = useState("Waiting for login...");
   const [evaluationResult, setEvaluationResult] = useState(null);
@@ -50,9 +51,9 @@ function App() {
 
         if (data.success) {
           setToken(data.result.token);
+          setPayload(data.result.decoded);
           setIsScanning(true);
           const { studentNumber } = data.result.decoded;
-          setStudentId(studentNumber);
           setStudentName("Student No: " + studentNumber);
           return;
         }
@@ -257,6 +258,7 @@ function App() {
     const { token, decoded } = logIn.result;
     console.log(JSON.stringify(decoded));
     setToken(token);
+    setPayload(decoded);
     setStudentName("Student No: " + decoded.studentNumber);
     console.log(`Manual login successful for ID: ${studentId}`);
   };
@@ -285,6 +287,7 @@ function App() {
 
     if (logOut.success) {
       setToken("");
+      setPayload(null);
       setStudentId("");
       setStudentName("Waiting for login...");
       setIsScanning(false);
@@ -345,7 +348,7 @@ function App() {
           text: isCompliant ? "COMPLETE" : "INCOMPLETE",
           sub: isCompliant
             ? "Uniform Compliant"
-            : "Missing: " + reasons?.join(", "),
+            : "Reasons: " + reasons?.join(", "),
           color: isCompliant ? "#4ade80" : "#f87171",
         };
       }
@@ -433,7 +436,9 @@ function App() {
 
               <div className="detail-row">
                 <span className="detail-label">Student Number</span>
-                <span className="detail-value">{studentId || "---"}</span>
+                <span className="detail-value">
+                  {payload?.studentNumber || "---"}
+                </span>
               </div>
               <div className="detail-row">
                 <span className="detail-label">Name</span>
