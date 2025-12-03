@@ -46,3 +46,13 @@ class ApiResponse(BaseModel):
     success: bool
     message: str = ""
     result: Any = None
+
+class EvaluationResult(TypedDict):
+    isCompliant: bool
+    reasons: list[str]
+
+class EvaluationResponse(ApiResponse):
+    '''
+    Response type of the new-record endpoint
+    '''
+    result: EvaluationResult | None = None

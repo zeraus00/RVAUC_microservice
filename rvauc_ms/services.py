@@ -1,6 +1,6 @@
 import os
 import httpx
-from rvauc_ms.schemas import ApiResponse, StudentDetails
+from rvauc_ms.schemas import EvaluationResponse, StudentDetails
 from rvauc_ms.utils import decode_rvauc_ms_jwt, scan_to_dto
 
 def get_environment() -> str:
@@ -31,7 +31,7 @@ class RvaucMsService:
     base_url = get_rvauc_ms_address()
 
     @staticmethod
-    async def new_record(token: str, detected: dict[str, bool]) -> ApiResponse:
+    async def new_record(token: str, detected: dict[str, bool]) -> EvaluationResponse:
 
         try:
             url = RvaucMsService.base_url + "/uniform-compliance/new-record"
@@ -47,10 +47,10 @@ class RvaucMsService:
 
             response = await client.post(url, json=record, headers=headers)
 
-            parsed = ApiResponse(**response.json())
+            parsed = EvaluationResponse(**response.json())
             
             return parsed
         except Exception as e:
             print("Failed storing record in method new_record: " +  str(e))
-            return ApiResponse(success=False, message="Failed storing new record.")
+            return EvaluationResponse(success=False, message="Failed storing new record.")
 
