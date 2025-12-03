@@ -261,6 +261,11 @@ function App() {
     console.log(`Manual login successful for ID: ${studentId}`);
   };
 
+  const handleConfirm = async () => {
+    //  add confirm evaluation logic here
+    await handleLogOut();
+  };
+
   const handleLogOut = async () => {
     if (!token) return;
     const logOut = await logOut();
