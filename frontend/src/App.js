@@ -29,6 +29,7 @@ function App() {
   });
   const [isVerifyDisabled, setIsVerifyDisabled] = useState(false);
   const [isRetryDisabled, setIsRetryDisabled] = useState(false);
+  const [isLogInDisabled, setIsLogInDisabled] = useState(false);
 
   // Removed redundant 'boxes' state as it's only used internally by drawBoxes
 
@@ -149,6 +150,10 @@ function App() {
     const isRetryDisabled = wsStatus === "Disconnected" || !isVerifyDisabled;
     setIsRetryDisabled(isRetryDisabled);
   }, [isVerifyDisabled]);
+  //  login button disabling
+  useEffect(() => {
+    setIsLogInDisabled(!!token);
+  }, [token]);
 
   // --- Helper Functions ---
 
@@ -242,7 +247,7 @@ function App() {
   // --- Render Helpers ---
   useEffect(() => {
     const getEvaluationStatus = () => {
-      if (wsStatus == "Disconnected") {
+      if (wsStatus === "Disconnected") {
         return {
           text: "Disconnected",
           sub: "System is disconnected.",
@@ -417,7 +422,12 @@ function App() {
             />
 
             {/* LOGIN BUTTON */}
-            <button className="login-btn" onClick={handleLogin}>
+            <button
+              className="login-btn"
+              onClick={handleLogin}
+              disabled={isLogInDisabled}
+              style={{ opacity: isLogInDisabled ? 0.5 : 1 }}
+            >
               Authenticate Log In
             </button>
           </div>
