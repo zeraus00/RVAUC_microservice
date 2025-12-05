@@ -286,3 +286,107 @@ body, html, #root {
   display: inline-block;
   margin-right: 6px;
 }
+
+/* --- PROFILE AREA --- */
+.profile-wrapper {
+  position: relative;
+  margin-right: 80px;
+}
+
+.profile-container {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #E9FFF3;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* DROPDOWN BOX */
+.dropdown-menu {
+  position: absolute;
+  top: 70px; 
+  right: 0; 
+  width: 260px;
+  background: linear-gradient(180deg, #1F342E, #1A2A26);
+  border-radius: 10px;
+  padding: 15px;
+  color: #fff;
+  border-bottom: 1px solid #14452F;
+  box-shadow: 0 4px 18px rgba(10, 92, 54, 0.32), inset 0 -1px 6px rgba(0,0,0,0.2);
+  animation: fadeDown 0.2s ease-out;
+  z-index: 1100;
+}
+
+
+@keyframes fadeDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* HEADER */
+.dropdown-header {
+  display: flex;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #222;
+}
+
+.dropdown-img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.dropdown-name {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.dropdown-role {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* INFO ROWS */
+.dropdown-section {
+  margin-top: 12px;
+}
+
+.dropdown-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 14px;
+}
+
+.dropdown-row .value {
+  opacity: 0.8;
+}
+
+/* LOGOUT BUTTON */
+.logout-button {
+  margin-top: 15px;
+  width: 100%;
+  background: #448fff;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: white;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.logout-button:hover {
+  background: #cc0000be;
+}

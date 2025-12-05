@@ -24,6 +24,9 @@ function App() {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [countdown, setCountdown] = useState(null);
 
+  //dropdown profile
+   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   //  --  Ui States --
   const [statusDisplay, setStatusDisplay] = useState({
     text: "Ready.",
@@ -380,14 +383,62 @@ function App() {
 
   return (
     <>
-      {/* TOP NAVBAR */}
       <div className="top-navbar">
         <div className="nav-left">
           RVAUC-MS Compliance Detection{" "}
           <span style={{ fontSize: "12px", opacity: 0.7 }}>({wsStatus})</span>
         </div>
-      </div>
 
+        <div className="nav-right">
+          {/* PROFILE DROPDOWN */}
+          <div className="profile-wrapper">
+            <div
+              className="profile-container"
+              onClick={() => setDropdownOpen(prev => !prev)}
+            >
+              <img
+                src="https://i.pravatar.cc/150"
+                alt="Profile"
+                className="profile-image"
+              />
+            </div>
+
+            {dropdownOpen && (
+              <div className="dropdown-menu">
+                <div className="dropdown-header-text">
+                  <div className="dropdown-title">Profile</div>
+                  <div className="dropdown-name">{studentName}</div>
+                  <div className="dropdown-role">RVAUC-MS User</div>
+                </div>
+
+                <div className="dropdown-section">
+                  <div className="dropdown-row">
+                    <span>Student Number:</span>
+                    <span className="value">{payload?.studentNumber || "---"}</span>
+                  </div>
+                  <div className="dropdown-row">
+                    <span>Department:</span>
+                    <span className="value">CCS</span>
+                  </div>
+                  <div className="dropdown-row">
+                    <span>Year Level:</span>
+                    <span className="value">4th</span>
+                  </div>
+                  <div className="dropdown-row">
+                    <span>Block:</span>
+                    <span className="value">A</span>
+                  </div>
+                </div>
+
+                <button className="logout-button" onClick={handleLogOut}>
+                  Log out
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      
       {/* MAIN CONTENT */}
       <div className="main-container">
         {/* LEFT CAMERA FEED */}
@@ -427,6 +478,7 @@ function App() {
         {/* RIGHT SIDE PANEL */}
         <div className="side-panel-wrapper">
           <div className="side-panel">
+
             {/* STUDENT PROFILE CARD */}
             <div className="card">
               <div className="card-title">
@@ -440,6 +492,22 @@ function App() {
                   {payload?.studentNumber || "---"}
                 </span>
               </div>
+
+              <div className="detail-row">
+                  <span className="detail-label">Department</span>
+                  <span className="detail-value">...</span>
+                </div>
+
+                <div className="detail-row">
+                  <span className="detail-label">Year Level</span>
+                  <span className="detail-value">...</span>
+                </div>
+
+                <div className="detail-row">
+                  <span className="detail-label">Block</span>
+                  <span className="detail-value">...</span>
+                </div>
+
               <div className="detail-row">
                 <span className="detail-label">Name</span>
                 <span className="detail-value">{studentName}</span>
