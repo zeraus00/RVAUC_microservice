@@ -267,6 +267,7 @@ function App() {
     console.log(JSON.stringify(decoded));
     setToken(token);
     setPayload(decoded);
+    setIsScanning(true);
     const { surname, firstName } = decoded;
     const fullName = surname + ", " + firstName;
     setStudentName(fullName.toUpperCase());
@@ -329,7 +330,6 @@ function App() {
       //   };
 
       if (evaluationResult) {
-        console.log(JSON.stringify(evaluationResult));
         if (!isConfirmed) {
           //  return type of the yolo microservice
           const { completeness, missing } = evaluationResult;
