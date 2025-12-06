@@ -48,6 +48,8 @@ class Evaluation(models.Model):
         if use_inference_if_unknown:
             self.gender = inferred_gender
 
+        self.gender = "male"
+
         # Required items based on gender
         if self.gender == "male":
             required = ["polo", "logo", "black_slacks", "black_shoes"]
