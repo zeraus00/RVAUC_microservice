@@ -82,7 +82,7 @@ export const sessionBroker = async () => {
 export const logOut = async () => {
   console.log("signing out...");
 
-  const data = await sessionBrokerClient
+  return await sessionBrokerClient
     .post("/sign-out/" + stationName)
     .then((response) => response.data)
     .catch(

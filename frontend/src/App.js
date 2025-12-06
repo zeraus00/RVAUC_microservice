@@ -25,7 +25,7 @@ function App() {
   const [countdown, setCountdown] = useState(null);
 
   //dropdown profile
-   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   //  --  Ui States --
   const [statusDisplay, setStatusDisplay] = useState({
@@ -53,11 +53,16 @@ function App() {
         const data = await sessionBroker();
 
         if (data.success) {
-          setToken(data.result.token);
-          setPayload(data.result.decoded);
           setIsScanning(true);
-          const { studentNumber } = data.result.decoded;
-          setStudentName("Student No: " + studentNumber);
+
+          const { decoded, token } = data.result;
+
+          setToken(token);
+          setPayload(decoded);
+
+          const { surname, firstName } = decoded;
+          const fullName = surname + ", " + firstName;
+          setStudentName(fullName.toUpperCase());
           return;
         }
 
@@ -262,7 +267,9 @@ function App() {
     console.log(JSON.stringify(decoded));
     setToken(token);
     setPayload(decoded);
-    setStudentName("Student No: " + decoded.studentNumber);
+    const { surname, firstName } = decoded;
+    const fullName = surname + ", " + firstName;
+    setStudentName(fullName.toUpperCase());
     console.log(`Manual login successful for ID: ${studentId}`);
   };
 
@@ -284,11 +291,11 @@ function App() {
 
   const handleLogOut = async () => {
     if (!token) return;
-    const logOut = await logOut();
+    const res = await logOut();
 
-    console.log(logOut.message);
+    console.log(res.message);
 
-    if (logOut.success) {
+    if (res.success) {
       setToken("");
       setPayload(null);
       setStudentId("");
@@ -374,6 +381,7 @@ function App() {
     setStatusDisplay(getEvaluationStatus());
   }, [
     wsStatus,
+    isConfirmed,
     isScanning,
     isVerifying,
     studentId,
@@ -394,7 +402,7 @@ function App() {
           <div className="profile-wrapper">
             <div
               className="profile-container"
-              onClick={() => setDropdownOpen(prev => !prev)}
+              onClick={() => setDropdownOpen((prev) => !prev)}
             >
               <img
                 src="https://i.pravatar.cc/150"
@@ -414,19 +422,23 @@ function App() {
                 <div className="dropdown-section">
                   <div className="dropdown-row">
                     <span>Student Number:</span>
-                    <span className="value">{payload?.studentNumber || "---"}</span>
+                    <span className="value">
+                      {payload?.studentNumber || "---"}
+                    </span>
                   </div>
                   <div className="dropdown-row">
                     <span>Department:</span>
-                    <span className="value">CCS</span>
+                    <span className="value">
+                      {payload?.department || "---"}
+                    </span>
                   </div>
                   <div className="dropdown-row">
                     <span>Year Level:</span>
-                    <span className="value">4th</span>
+                    <span className="value">{payload?.yearLevel || "---"}</span>
                   </div>
                   <div className="dropdown-row">
                     <span>Block:</span>
-                    <span className="value">A</span>
+                    <span className="value">{payload?.block || "---"}</span>
                   </div>
                 </div>
 
@@ -438,7 +450,7 @@ function App() {
           </div>
         </div>
       </div>
-      
+
       {/* MAIN CONTENT */}
       <div className="main-container">
         {/* LEFT CAMERA FEED */}
@@ -478,7 +490,6 @@ function App() {
         {/* RIGHT SIDE PANEL */}
         <div className="side-panel-wrapper">
           <div className="side-panel">
-
             {/* STUDENT PROFILE CARD */}
             <div className="card">
               <div className="card-title">
@@ -494,19 +505,23 @@ function App() {
               </div>
 
               <div className="detail-row">
-                  <span className="detail-label">Department</span>
-                  <span className="detail-value">...</span>
-                </div>
+                <span className="detail-label">Department</span>
+                <span className="detail-value">
+                  {payload?.department || "---"}
+                </span>
+              </div>
 
-                <div className="detail-row">
-                  <span className="detail-label">Year Level</span>
-                  <span className="detail-value">...</span>
-                </div>
+              <div className="detail-row">
+                <span className="detail-label">Year Level</span>
+                <span className="detail-value">
+                  {payload?.yearLevel || "---"}
+                </span>
+              </div>
 
-                <div className="detail-row">
-                  <span className="detail-label">Block</span>
-                  <span className="detail-value">...</span>
-                </div>
+              <div className="detail-row">
+                <span className="detail-label">Block</span>
+                <span className="detail-value">{payload?.block || "---"}</span>
+              </div>
 
               <div className="detail-row">
                 <span className="detail-label">Name</span>
