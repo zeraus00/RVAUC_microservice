@@ -17,12 +17,11 @@ def scan_to_dto(student_details: StudentDetails , detected: dict[str, bool]):
 
     compliance_record: ComplianceRecord = {
         "studentNumber": student_details.student_number,
-        "uniformTypeId": 0,
+        "uniformTypeId": 1,
         "validFootwear": False,
         "hasId": True,
         "validUpperwear": False,
         "validBottoms": False,
-        "termId": student_details.term_id
     }
 
     # get the detection status of each key in the detected dict.

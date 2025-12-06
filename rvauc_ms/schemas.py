@@ -26,7 +26,6 @@ class ComplianceRecord(TypedDict):
     hasId: bool
     validUpperwear: bool
     validBottoms: bool
-    termId: int # default to 1 for now
 
 class TokenPayload(BaseModel):
     '''
