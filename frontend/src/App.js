@@ -23,13 +23,13 @@ function App() {
   const [studentName, setStudentName] = useState("Waiting for login...");
   const [evaluationResult, setEvaluationResult] = useState(null);
   const [wsStatus, setWsStatus] = useState("Disconnected");
-  const [isScanning, setIsScanning] = useState(false); // Scanning defaults to off
+  const [isScanning, setIsScanning] = useState(true); // Scanning defaults to off
   const [isVerifying, setIsVerifying] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [countdown, setCountdown] = useState(null);
 
-  //  Attendance
+  //  Attendance
   const [enrollment, setEnrollment] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const [attendanceMsg, setAttendanceMsg] = useState("");
@@ -37,7 +37,7 @@ function App() {
   //dropdown profile
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
-  //  --  Ui States --
+  //  --  Ui States --
   const [statusDisplay, setStatusDisplay] = useState({
     text: "Ready.",
     sub: "System idle.",
@@ -125,7 +125,7 @@ function App() {
             drawBoxes(data.boxes);
           }
         } else {
-          //  handle verify / confirm actions
+          //  handle verify / confirm actions
           console.log("Evaluation:", data.evaluation);
           setEvaluationResult(data.evaluation);
           setIsScanning(false); // Stop scanning on result
@@ -203,7 +203,7 @@ function App() {
       wsStatus === "Disconnected" || !token || isVerifying || evaluationResult;
     setIsVerifyDisabled(isVerifyDisabled);
   }, [wsStatus, token, isVerifying, evaluationResult]);
-  //  retry button disabling
+  //  retry button disabling
   useEffect(() => {
     const isRetryDisabled =
       wsStatus === "Disconnected" || !token || isConfirmed || !isVerifyDisabled;
@@ -376,16 +376,9 @@ function App() {
         };
       }
 
-      // if (!isScanning && studentId && !evaluationResult)
-      //   return {
-      //     text: "Scanning Paused",
-      //     sub: "Press Retry to scan again.",
-      //     color: "yellow",
-      //   };
-
       if (evaluationResult) {
         if (!isConfirmed) {
-          //  return type of the yolo microservice
+          //  return type of the yolo microservice
           const { completeness, missing } = evaluationResult;
           return {
             text: completeness ? "COMPLETE" : "INCOMPLETE",
@@ -396,7 +389,7 @@ function App() {
           };
         }
 
-        //  return type of rvaucms
+        //  return type of rvaucms
         const { success, message } = evaluationResult;
 
         if (!success)
@@ -583,52 +576,120 @@ function App() {
               </div>
             </div>
 
-            {/* EVALUATION BOX */}
-            <div className="eval-box">
-              <div className="eval-icon">⚙️</div>
-              <p className="eval-title">EVALUATION RESULT</p>
+            {/* START: WRAPPER FOR EVALUATION AND ATTENDANCE */}
+            <div className="results-and-attendance-wrapper" 
+                 style={{ 
+                   display: 'flex', 
+                   gap: '15px', 
+                   marginBottom: '15px',
+                   /* Allow wrapping on smaller screens if necessary */
+                   flexWrap: 'wrap' 
+                 }}>
+              
+              {/* EVALUATION BOX (Left Column in the inner wrapper) */}
+              <div className="eval-box" style={{ flex: 1 }}>
+                <div className="eval-icon">⚙️</div>
+                <p className="eval-title">EVALUATION RESULT</p>
 
-              <p className="eval-result" style={{ color: statusDisplay.color }}>
-                {statusDisplay.text}
-              </p>
+                <p className="eval-result" style={{ color: statusDisplay.color }}>
+                  {statusDisplay.text}
+                </p>
 
-              <p className="eval-sub">{statusDisplay.sub}</p>
-            </div>
+                <p className="eval-sub">{statusDisplay.sub}</p>
+                
+                {/* BUTTONS (VERIFY/RETRY/CONFIRM) - Kept with the Evaluation result */}
+                <div className="button-row">
+                  <button
+                    className="confirm-btn"
+                    onClick={isConfirming ? handleConfirm : handleVerify}
+                    disabled={
+                      isConfirming ? false : isVerifyDisabled || isConfirmed
+                    }
+                    style={{
+                      opacity: isConfirming
+                        ? 1
+                        : isVerifyDisabled || isConfirmed
+                        ? 0.5
+                        : 1,
+                    }}
+                  >
+                    {isConfirmed
+                      ? "Confirmed"
+                      : isConfirming
+                      ? "Confirm"
+                      : "Verify"}
+                  </button>
 
-            {/* BUTTONS */}
-            <div className="button-row">
-              <button
-                className="confirm-btn"
-                onClick={isConfirming ? handleConfirm : handleVerify}
-                disabled={
-                  isConfirming ? false : isVerifyDisabled || isConfirmed
-                }
-                style={{
-                  opacity: isConfirming
-                    ? 1
-                    : isVerifyDisabled || isConfirmed
-                    ? 0.5
-                    : 1,
-                }}
-              >
-                {isConfirmed
-                  ? "Confirmed"
-                  : isConfirming
-                  ? "Confirm"
-                  : "Verify"}
-              </button>
+                  <button
+                    className="retry-btn"
+                    onClick={handleRetry}
+                    disabled={isRetryDisabled}
+                    style={{ opacity: isRetryDisabled ? 0.5 : 1 }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
 
-              <button
-                className="retry-btn"
-                onClick={handleRetry}
-                disabled={isRetryDisabled}
-                style={{ opacity: isRetryDisabled ? 0.5 : 1 }}
-              >
-                Retry
-              </button>
-            </div>
+              {/* ATTENDANCE CARD (Right Column in the inner wrapper) */}
+              <div className="eval-box" style={{ flex: 1 }}>
+                  <div className="eval-icon">🗓️</div>
+                  <p className="eval-title">ATTENDANCE STATUS</p>
 
-            {/* INPUT */}
+                  <p className="eval-result" 
+                      style={{ 
+                          color: attendanceMsg.includes('Recorded') ? '#4ade80' : 
+                                 attendanceMsg.includes('already') ? 'yellow' : 
+                                 'white' 
+                      }}>
+                      {attendanceMsg || "Awaiting Attendance"}
+                  </p>
+
+                  {/* Enrollment details are moved into styled detail rows */}
+                  <div className="detail-row">
+                      <span className="detail-label">Current Class</span>
+                      <span className="detail-value">
+                          {enrollment?.courseCode || "---"}
+                      </span>
+                  </div>
+                  <div className="detail-row">
+                      <span className="detail-label">Time / Day</span>
+                      <span className="detail-value">
+                          {enrollment?.weekDay && enrollment?.startTimeText
+                              ? `${enrollment.weekDay} | ${enrollment.startTimeText} - ${enrollment.endTimeText}`
+                              : "---"}
+                      </span>
+                  </div>
+                  <div className="detail-row">
+                      <span className="detail-label">Instructor</span>
+                      <span className="detail-value">
+                          {enrollment?.professor?.firstName && enrollment?.professor?.surname
+                              ? `${enrollment.professor.firstName} ${enrollment.professor.surname}`
+                              : "---"}
+                      </span>
+                  </div>
+                  
+                  {/* TAKE ATTENDANCE BUTTON */}
+                  <div className="button-row" style={{ marginTop: '10px' }}>
+                      <button
+                          className="login-btn" 
+                          onClick={handleTakeAttendance}
+                          disabled={!token}
+                          style={{
+                              opacity: token ? 1 : 0.5,
+                              width: '100%', 
+                              backgroundColor: '#22c55e', 
+                          }}
+                      >
+                          RECORD ATTENDANCE
+                      </button>
+                  </div>
+              </div>
+
+            </div >
+            {/* END: WRAPPER FOR EVALUATION AND ATTENDANCE */}
+
+            {/* INPUT AND LOGIN (Remain at the bottom) */}
             <input
               className="student-input"
               placeholder="Student Number (optional)"
@@ -648,40 +709,6 @@ function App() {
               Authenticate Log In
             </button>
           </div>
-        </div>
-
-        {/* ATTENDANCE BOX */}
-        <div className="eval-box">
-          <div className="eval-icon">⚙️</div>
-          <p className="eval-title">Attendance Result</p>
-
-          <p className="eval-result">{attendanceMsg}</p>
-
-          <p>{enrollment?.weekDay ?? ""}</p>
-          <p>{enrollment?.startTimeText + " - " + enrollment?.endTimeText}</p>
-          <p>{enrollment?.classNumber ?? ""}</p>
-          <p>{enrollment?.courseCode ?? ""}</p>
-          <p>{enrollment?.courseName ?? ""}</p>
-          <p>{enrollment?.weekDay ?? ""}</p>
-          <p>
-            {enrollment?.professor?.firstName +
-              " " +
-              enrollment?.professor?.surname}
-          </p>
-        </div>
-
-        {/* BUTTONS */}
-        <div className="button-row">
-          <button
-            className="confirm-btn"
-            onClick={handleTakeAttendance}
-            disabled={!token}
-            style={{
-              opacity: token ? 1 : 0.5,
-            }}
-          >
-            Take Attendance
-          </button>
         </div>
       </div>
     </>
