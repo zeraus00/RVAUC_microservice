@@ -50,7 +50,8 @@ class RvaucMsService:
             parsed = EvaluationResponse(**response.json())
             
             return parsed
+        except httpx.HTTPStatusError as exc:
+            return EvaluationResponse(**exc.response.json())
         except Exception as e:
-            print("Failed storing record in method new_record: " +  str(e))
             return EvaluationResponse(success=False, message="Failed storing new record.")
 

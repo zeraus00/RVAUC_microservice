@@ -88,6 +88,25 @@ function App() {
 
   // --- 1. WebSocket Connection ---
   useEffect(() => {
+    const handleLogOut = async () => {
+      const res = await logOut();
+
+      console.log(res.message);
+
+      if (res.success) {
+        setToken("");
+        setPayload(null);
+        setStudentId("");
+        setStudentName("Waiting for login...");
+        setIsScanning(false);
+        setDetectedItems({});
+        clearCanvas();
+        setIsVerifying(false);
+        setIsConfirming(false);
+        setIsConfirmed(false);
+        setEvaluationResult(null);
+      }
+    };
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
@@ -97,20 +116,28 @@ function App() {
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      (async () => {
+        const data = JSON.parse(event.data);
 
-      if (data.type === "detection") {
-        setDetectedItems(data.detected_items || {});
-        if (canvasRef.current && videoRef.current) {
-          drawBoxes(data.boxes);
+        if (data.type === "detection") {
+          setDetectedItems(data.detected_items || {});
+          if (canvasRef.current && videoRef.current) {
+            drawBoxes(data.boxes);
+          }
+        } else {
+          //  handle verify / confirm actions
+          console.log("Evaluation:", data.evaluation);
+          setEvaluationResult(data.evaluation);
+          setIsScanning(false); // Stop scanning on result
+          clearCanvas();
+
+          if (
+            data.type === "confirm" &&
+            data.evaluation.message === "Invalid or expired token."
+          )
+            await handleLogOut();
         }
-      } else {
-        //  handle verify / confirm actions
-        console.log("Evaluation:", data.evaluation);
-        setEvaluationResult(data.evaluation);
-        setIsScanning(false); // Stop scanning on result
-        clearCanvas();
-      }
+      })().catch((err) => console.error("ws async error: " + err));
     };
 
     ws.onclose = () => setWsStatus("Disconnected");
