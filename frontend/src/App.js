@@ -332,17 +332,11 @@ function App() {
           ? "Attendance Recorded"
           : "You already have an attendance."
       );
-
-      console.log(JSON.stringify(res));
     } else {
       setAttendanceMsg("Error: " + res.message);
+      if (res.message === "Invalid or expired token.") await handleLogOut();
     }
   };
-
-  useEffect(() => {
-    console.log(JSON.stringify(attendance));
-    console.log(JSON.stringify(enrollment));
-  }, [attendance, enrollment]);
 
   // --- Render Helpers ---
   useEffect(() => {
