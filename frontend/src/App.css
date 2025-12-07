@@ -10,18 +10,19 @@ body, html, #root {
 
 /* Main layout (fixed navbar margin already included) */
 .main-container {
+  /* CHANGE: Removed max-width restriction to use full screen */
   display: flex;
-  justify-content: flex-start;
+  justify-content: center; /* Center the content */
   align-items: flex-start;
-  gap: 40px;
+  gap: 30px; /* Reduced gap slightly */
   padding: 85px 30px 80px; /* extra top padding for navbar */
-  max-width: 1600px;
+  /* max-width: 1600px; <--- REMOVED */
   margin: 0 auto;
 }
 
 /* Needed wrapper for camera section */
 .camera-section {
-  flex: 1;
+  flex: 3; /* Increased flex ratio so camera takes more space */
   display: flex;
   flex-direction: column;
 }
@@ -45,10 +46,12 @@ body, html, #root {
   padding: 25px;
   border: 1px solid #14452F;
 
-  width: 420px;
-  max-width: 420px;
+  width: 600px; /* INCREASED WIDTH */
+  max-width: 600px; /* INCREASED MAX WIDTH */
   flex-grow: 0;
   flex-shrink: 0;
+  
+  /* Flex is removed from here and managed by main-container */
 
   box-shadow:
     0 0 32px rgba(10, 92, 54, 0.55),
@@ -116,13 +119,14 @@ body, html, #root {
   color: #E9FFF3;
 }
 
-/* eval box */
+/* eval box (used for attendance box too) */
 
 .eval-box {
   border-radius: 18px;
   background: linear-gradient(145deg, #18392B, #1D2E28);
   border: 1px solid #14452F;
-  padding: 40px 20px;
+  /* Original padding was 40px 20px - reduced to prevent overflow in the 2-column layout */
+  padding: 20px 15px; 
   text-align: center;
   color: #D8E9E3;
   box-shadow: 0 0 22px rgba(20, 69, 47, 0.4);
