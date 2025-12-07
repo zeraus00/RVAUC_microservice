@@ -1,7 +1,12 @@
 import "./App.css";
 // FIX 1: Ensure useRef, useState, and useCallback are imported
 import { useEffect, useState, useRef, useCallback } from "react";
-import { manualLogIn, sessionBroker, logOut } from "./shared/utils";
+import {
+  manualLogIn,
+  sessionBroker,
+  logOut,
+  takeAttendance,
+} from "./shared/utils";
 
 function App() {
   // --- Refs ---
@@ -23,6 +28,11 @@ function App() {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [countdown, setCountdown] = useState(null);
+
+  //  Attendance
+  const [enrollment, setEnrollment] = useState(null);
+  const [attendance, setAttendance] = useState(null);
+  const [attendanceMsg, setAttendanceMsg] = useState("");
 
   //dropdown profile
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -264,7 +274,6 @@ function App() {
     }
 
     const { token, decoded } = logIn.result;
-    console.log(JSON.stringify(decoded));
     setToken(token);
     setPayload(decoded);
     setIsScanning(true);
@@ -310,6 +319,30 @@ function App() {
       setEvaluationResult(null);
     }
   };
+
+  const handleTakeAttendance = async () => {
+    if (!token) return;
+    const res = await takeAttendance(token);
+
+    if (res.success) {
+      setAttendance(res.result.attendance);
+      setEnrollment(res.result.enrollment);
+      setAttendanceMsg(
+        res.result.attendance.isNew
+          ? "Attendance Recorded"
+          : "You already have an attendance."
+      );
+
+      console.log(JSON.stringify(res));
+    } else {
+      setAttendanceMsg("Error: " + res.message);
+    }
+  };
+
+  useEffect(() => {
+    console.log(JSON.stringify(attendance));
+    console.log(JSON.stringify(enrollment));
+  }, [attendance, enrollment]);
 
   // --- Render Helpers ---
   useEffect(() => {
@@ -594,6 +627,40 @@ function App() {
               Authenticate Log In
             </button>
           </div>
+        </div>
+
+        {/* ATTENDANCE BOX */}
+        <div className="eval-box">
+          <div className="eval-icon">⚙️</div>
+          <p className="eval-title">Attendance Result</p>
+
+          <p className="eval-result">{attendanceMsg}</p>
+
+          <p>{enrollment?.weekDay ?? ""}</p>
+          <p>{enrollment?.startTimeText + " - " + enrollment?.endTimeText}</p>
+          <p>{enrollment?.classNumber ?? ""}</p>
+          <p>{enrollment?.courseCode ?? ""}</p>
+          <p>{enrollment?.courseName ?? ""}</p>
+          <p>{enrollment?.weekDay ?? ""}</p>
+          <p>
+            {enrollment?.professor?.firstName +
+              " " +
+              enrollment?.professor?.surname}
+          </p>
+        </div>
+
+        {/* BUTTONS */}
+        <div className="button-row">
+          <button
+            className="confirm-btn"
+            onClick={handleTakeAttendance}
+            disabled={!token}
+            style={{
+              opacity: token ? 1 : 0.5,
+            }}
+          >
+            Take Attendance
+          </button>
         </div>
       </div>
     </>

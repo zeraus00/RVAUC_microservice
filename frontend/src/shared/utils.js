@@ -90,3 +90,44 @@ export const logOut = async () => {
         error.response?.data ?? { success: false, message: error.message }
     );
 };
+
+export const attendanceClient = axios.create({
+  baseURL: "http://localhost:2620/enrollments/attendance",
+  withCredentials: true,
+});
+
+attendanceClient.interceptors.request.use(
+  (config) => {
+    // means the request not a retry, it's the first attempt.
+    if (!config.headers["Authorization"]) {
+      //  use a new token to make the request.
+      config.headers["Authorization"] = `Bearer ${sessionBrokerToken}`;
+    }
+    return config;
+  },
+  (err) => {
+    Promise.reject(err);
+  }
+);
+
+export const takeAttendance = async (token) => {
+  const now = new Date();
+
+  return await attendanceClient
+    .post(
+      "/new-record",
+      {
+        date: now.toISOString(),
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    )
+    .then((result) => result.data) //  * { enrollment, attendance }
+    .catch(
+      (error) =>
+        error.response?.data ?? { success: false, message: error.message }
+    );
+};
