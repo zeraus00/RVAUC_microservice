@@ -90,25 +90,6 @@ function App() {
 
   // --- 1. WebSocket Connection ---
   useEffect(() => {
-    const handleLogOut = async () => {
-      const res = await logOut();
-
-      console.log(res.message);
-
-      if (res.success) {
-        setToken("");
-        setPayload(null);
-        setStudentId("");
-        setStudentName("Waiting for login...");
-        setIsScanning(false);
-        setDetectedItems({});
-        clearCanvas();
-        setIsVerifying(false);
-        setIsConfirming(false);
-        setIsConfirmed(false);
-        setEvaluationResult(null);
-      }
-    };
     const ws = new WebSocket(WS_URL);
     wsRef.current = ws;
 
