@@ -34,7 +34,9 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
             # Decode and Run YOLO
             img = image_from_base64_bytes(frame_b64)
-            detected, boxes = await asyncio.to_thread(run_yolo_on_cv_image, img)
+            detected, boxes = run_yolo_on_cv_image(img)
+
+            print("Last Detected: " + json.dumps(detected), flush=True)
 
             response = {
                 "type": "detection",
@@ -45,16 +47,23 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
         # --- FLOW 2: Verification (Save to DB) ---
         elif action == "verify":
+            print ("Received verify action", flush=True)
             student_id = data.get("student_id", "")
             self.last_detected = data.get("detected_items", {})
+            print("Detected for verification: " + json.dumps(self.last_detected), flush= True)
 
             # Send evaluation to rvauc ms server
+            print("Starting evaluation", flush=True)
             eval_data = await self.create_evaluation_entry(student_id, self.last_detected)
+            print("Evaluation done", flush=True)
 
             await self.send(text_data=json.dumps({
                 "type": "verify_result",
+                "detected_items": self.last_detected,
                 "evaluation": eval_data
             }))
+
+            print("Response sent", flush=True)
 
         # --- FLOW 3: Confirmation (Send to RVAUC-MS) ---
         elif action == "confirm":

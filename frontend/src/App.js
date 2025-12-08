@@ -1,6 +1,6 @@
 import "./App.css";
 // FIX 1: Ensure useRef, useState, and useCallback are imported
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useReducer } from "react";
 import {
   manualLogIn,
   sessionBroker,
@@ -13,6 +13,7 @@ function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
+  const verifySnapshotRef = useRef(null);
 
   // --- State ---
   const [detectedItems, setDetectedItems] = useState({});
@@ -24,6 +25,7 @@ function App() {
   const [evaluationResult, setEvaluationResult] = useState(null);
   const [wsStatus, setWsStatus] = useState("Disconnected");
   const [isScanning, setIsScanning] = useState(true); // Scanning defaults to off
+  const [isCountingDown, setIsCountingDown] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -116,28 +118,37 @@ function App() {
     };
 
     ws.onmessage = (event) => {
-      (async () => {
-        const data = JSON.parse(event.data);
+      const data = JSON.parse(event.data);
 
-        if (data.type === "detection") {
-          setDetectedItems(data.detected_items || {});
-          if (canvasRef.current && videoRef.current) {
-            drawBoxes(data.boxes);
-          }
-        } else {
-          //  handle verify / confirm actions
-          console.log("Evaluation:", data.evaluation);
-          setEvaluationResult(data.evaluation);
-          setIsScanning(false); // Stop scanning on result
-          clearCanvas();
+      if (data.type === "detection" && !isVerifying) {
+        sendingRef.current = false;
 
-          if (
-            data.type === "confirm" &&
-            data.evaluation.message === "Invalid or expired token."
-          )
-            await handleLogOut();
+        // &&
+        //   data.detected_items &&
+        //   Object.keys(data.detected_items).length > 0
+        if (
+          !isVerifying &&
+          data.detected_items &&
+          Object.keys(data.detected_items).length > 0
+        ) {
+          console.log("Last detected: " + JSON.stringify(data.detected_items));
+          verifySnapshotRef.current = data.detected_items;
+          setDetectedItems(data.detected_items);
         }
-      })().catch((err) => console.error("ws async error: " + err));
+
+        if (canvasRef.current && videoRef.current) {
+          drawBoxes(data.boxes);
+        }
+      } else {
+        //  handle verify / confirm actions
+        console.log(
+          "Detected by verification:" + JSON.stringify(data.detected_items)
+        );
+        console.log("Evaluation:", data.evaluation);
+        setEvaluationResult(data.evaluation);
+        setIsScanning(false); // Stop scanning on result
+        clearCanvas();
+      }
     };
 
     ws.onclose = () => setWsStatus("Disconnected");
@@ -168,19 +179,28 @@ function App() {
 
   // --- 3. Frame Loop (Sending Images) ---
   // Re-defined with useCallback for stability in the useEffect dependency array
+  const sendingRef = useRef(false);
+
   const sendFrame = useCallback(() => {
+    if (sendingRef.current) return;
+
     const video = videoRef.current;
     if (!video || video.readyState !== 4) return;
 
     const tempCanvas = document.createElement("canvas");
     tempCanvas.width = video.videoWidth;
     tempCanvas.height = video.videoHeight;
+
     const ctx = tempCanvas.getContext("2d");
+    if (!ctx) return;
+
     ctx.drawImage(video, 0, 0, tempCanvas.width, tempCanvas.height);
 
     const base64 = tempCanvas.toDataURL("image/jpeg", 0.5);
 
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      sendingRef.current = true;
+
       wsRef.current.send(
         JSON.stringify({
           action: "frame",
@@ -188,11 +208,11 @@ function App() {
         })
       );
     }
-  }, []); // Empty dependencies for useCallback
+  }, []);
 
   useEffect(() => {
     if (!isScanning) return;
-    const interval = setInterval(sendFrame, FRAME_RATE);
+    const interval = setInterval(sendFrame, FRAME_RATE); //  200
     return () => clearInterval(interval);
   }, [isScanning, sendFrame]); // Added sendFrame to dependencies
 
@@ -200,9 +220,13 @@ function App() {
   // verify button disabling
   useEffect(() => {
     const isVerifyDisabled =
-      wsStatus === "Disconnected" || !token || isVerifying || evaluationResult;
+      wsStatus === "Disconnected" ||
+      !token ||
+      isCountingDown ||
+      isVerifying ||
+      evaluationResult;
     setIsVerifyDisabled(isVerifyDisabled);
-  }, [wsStatus, token, isVerifying, evaluationResult]);
+  }, [wsStatus, token, isCountingDown, isVerifying, evaluationResult]);
   //  retry button disabling
   useEffect(() => {
     const isRetryDisabled =
@@ -256,31 +280,47 @@ function App() {
       return;
     }
 
-    setIsVerifying(true);
-
     const countdown = 5;
+
+    setIsCountingDown(true);
+
+    console.log("Before cd: " + JSON.stringify(verifySnapshotRef.current));
 
     for (let i = countdown; i > 0; i--) {
       setCountdown(i);
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
+    setIsCountingDown(false);
+
+    sendingRef.current = true;
+    setIsVerifying(true);
 
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log(
+        "Detected items for verification:" +
+          JSON.stringify(verifySnapshotRef.current)
+      );
+
       wsRef.current.send(
         JSON.stringify({
           action: "verify",
           student_id: studentId,
-          detected_items: detectedItems,
+          detected_items: verifySnapshotRef.current,
         })
       );
+
+      sendingRef.current = false;
       setIsConfirming(true);
     } else {
+      sendingRef.current = false;
       setIsVerifying(false);
       console.error("System not connected.");
     }
   };
 
   const handleRetry = () => {
+    sendingRef.current = false;
+    verifySnapshotRef.current = {};
     setIsVerifying(false);
     setIsConfirming(false);
     setEvaluationResult(null);
@@ -411,16 +451,18 @@ function App() {
       }
 
       return {
-        text: isVerifying
-          ? "VERIFYING IN..." + countdown
-          : isScanning
-          ? "SCANNING"
-          : "Ready",
-        sub: isVerifying
-          ? "Verifying detection..."
-          : isScanning
-          ? "Real-time detection active."
-          : "System Idle.",
+        text:
+          isCountingDown || isVerifying
+            ? "VERIFYING IN..." + countdown
+            : isScanning
+            ? "SCANNING"
+            : "Ready",
+        sub:
+          isCountingDown || isVerifying
+            ? "Verifying detection..."
+            : isScanning
+            ? "Real-time detection active."
+            : "System Idle.",
         color: isScanning ? "#60a5fa" : "white",
       };
     };
@@ -430,6 +472,7 @@ function App() {
     wsStatus,
     isConfirmed,
     isScanning,
+    isCountingDown,
     isVerifying,
     studentId,
     evaluationResult,
@@ -577,26 +620,30 @@ function App() {
             </div>
 
             {/* START: WRAPPER FOR EVALUATION AND ATTENDANCE */}
-            <div className="results-and-attendance-wrapper" 
-                 style={{ 
-                   display: 'flex', 
-                   gap: '15px', 
-                   marginBottom: '15px',
-                   /* Allow wrapping on smaller screens if necessary */
-                   flexWrap: 'wrap' 
-                 }}>
-              
+            <div
+              className="results-and-attendance-wrapper"
+              style={{
+                display: "flex",
+                gap: "15px",
+                marginBottom: "15px",
+                /* Allow wrapping on smaller screens if necessary */
+                flexWrap: "wrap",
+              }}
+            >
               {/* EVALUATION BOX (Left Column in the inner wrapper) */}
               <div className="eval-box" style={{ flex: 1 }}>
                 <div className="eval-icon">⚙️</div>
                 <p className="eval-title">EVALUATION RESULT</p>
 
-                <p className="eval-result" style={{ color: statusDisplay.color }}>
+                <p
+                  className="eval-result"
+                  style={{ color: statusDisplay.color }}
+                >
                   {statusDisplay.text}
                 </p>
 
                 <p className="eval-sub">{statusDisplay.sub}</p>
-                
+
                 {/* BUTTONS (VERIFY/RETRY/CONFIRM) - Kept with the Evaluation result */}
                 <div className="button-row">
                   <button
@@ -633,60 +680,64 @@ function App() {
 
               {/* ATTENDANCE CARD (Right Column in the inner wrapper) */}
               <div className="eval-box" style={{ flex: 1 }}>
-                  <div className="eval-icon">🗓️</div>
-                  <p className="eval-title">ATTENDANCE STATUS</p>
+                <div className="eval-icon">🗓️</div>
+                <p className="eval-title">ATTENDANCE STATUS</p>
 
-                  <p className="eval-result" 
-                      style={{ 
-                          color: attendanceMsg.includes('Recorded') ? '#4ade80' : 
-                                 attendanceMsg.includes('already') ? 'yellow' : 
-                                 'white' 
-                      }}>
-                      {attendanceMsg || "Awaiting Attendance"}
-                  </p>
+                <p
+                  className="eval-result"
+                  style={{
+                    color: attendanceMsg.includes("Recorded")
+                      ? "#4ade80"
+                      : attendanceMsg.includes("already")
+                      ? "yellow"
+                      : "white",
+                  }}
+                >
+                  {attendanceMsg || "Awaiting Attendance"}
+                </p>
 
-                  {/* Enrollment details are moved into styled detail rows */}
-                  <div className="detail-row">
-                      <span className="detail-label">Current Class</span>
-                      <span className="detail-value">
-                          {enrollment?.courseCode || "---"}
-                      </span>
-                  </div>
-                  <div className="detail-row">
-                      <span className="detail-label">Time / Day</span>
-                      <span className="detail-value">
-                          {enrollment?.weekDay && enrollment?.startTimeText
-                              ? `${enrollment.weekDay} | ${enrollment.startTimeText} - ${enrollment.endTimeText}`
-                              : "---"}
-                      </span>
-                  </div>
-                  <div className="detail-row">
-                      <span className="detail-label">Instructor</span>
-                      <span className="detail-value">
-                          {enrollment?.professor?.firstName && enrollment?.professor?.surname
-                              ? `${enrollment.professor.firstName} ${enrollment.professor.surname}`
-                              : "---"}
-                      </span>
-                  </div>
-                  
-                  {/* TAKE ATTENDANCE BUTTON */}
-                  <div className="button-row" style={{ marginTop: '10px' }}>
-                      <button
-                          className="login-btn" 
-                          onClick={handleTakeAttendance}
-                          disabled={!token}
-                          style={{
-                              opacity: token ? 1 : 0.5,
-                              width: '100%', 
-                              backgroundColor: '#22c55e', 
-                          }}
-                      >
-                          RECORD ATTENDANCE
-                      </button>
-                  </div>
+                {/* Enrollment details are moved into styled detail rows */}
+                <div className="detail-row">
+                  <span className="detail-label">Current Class</span>
+                  <span className="detail-value">
+                    {enrollment?.courseCode || "---"}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Time / Day</span>
+                  <span className="detail-value">
+                    {enrollment?.weekDay && enrollment?.startTimeText
+                      ? `${enrollment.weekDay} | ${enrollment.startTimeText} - ${enrollment.endTimeText}`
+                      : "---"}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Instructor</span>
+                  <span className="detail-value">
+                    {enrollment?.professor?.firstName &&
+                    enrollment?.professor?.surname
+                      ? `${enrollment.professor.firstName} ${enrollment.professor.surname}`
+                      : "---"}
+                  </span>
+                </div>
+
+                {/* TAKE ATTENDANCE BUTTON */}
+                <div className="button-row" style={{ marginTop: "10px" }}>
+                  <button
+                    className="login-btn"
+                    onClick={handleTakeAttendance}
+                    disabled={!token}
+                    style={{
+                      opacity: token ? 1 : 0.5,
+                      width: "100%",
+                      backgroundColor: "#22c55e",
+                    }}
+                  >
+                    RECORD ATTENDANCE
+                  </button>
+                </div>
               </div>
-
-            </div >
+            </div>
             {/* END: WRAPPER FOR EVALUATION AND ATTENDANCE */}
 
             {/* INPUT AND LOGIN (Remain at the bottom) */}

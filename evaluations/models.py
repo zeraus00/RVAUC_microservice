@@ -52,7 +52,7 @@ class Evaluation(models.Model):
 
         # Required items based on gender
         if self.gender == "male":
-            required = ["Polo", "LU Logo", "Slack Pants", "Black Shoes"]   # ! correct labels
+            required = ["Polo", "Slack Pants", "Black Shoes"]   # ! correct labels
         elif self.gender == "female":
             required = ["blouse", "logo", "green_belt", "skirt", "black_shoes"]
         else:
