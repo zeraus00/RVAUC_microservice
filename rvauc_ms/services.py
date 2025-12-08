@@ -40,18 +40,17 @@ class RvaucMsService:
             student_details = StudentDetails(student_number=decoded.studentNumber)
             record = scan_to_dto(student_details, detected)
 
-            headers = {
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
-            }
-
-            response = await client.post(url, json=record, headers=headers)
-
-            parsed = EvaluationResponse(**response.json())
-            
-            return parsed
-        except httpx.HTTPStatusError as exc:
-            return EvaluationResponse(**exc.response.json())
         except Exception as e:
-            return EvaluationResponse(success=False, message="Failed storing new record.")
+            return EvaluationResponse(success=False, message="Failed storing new record." + str(e))
+        
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+
+        response = await client.post(url, json=record, headers=headers)
+
+        parsed = EvaluationResponse(**response.json())
+        print ("success evaluating: ", parsed)
+        return parsed
 

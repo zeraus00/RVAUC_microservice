@@ -5,9 +5,9 @@ from rvauc_ms.schemas import ComplianceRecord, StudentDetails, TokenPayload
 
 LabelMappers: Mapping[UniformTypes, Mapping[str, str]] = {
     UniformTypes.type_a_male: {
-        "validUpperwear": "polo",
-        "validBottoms": "black_slacks",
-        "validFootwear": "black_shoes",
+        "validUpperwear": "Polo",
+        "validBottoms": "Black Slacks",
+        "validFootwear": "Black Shoes",
         "hasId": "id"
     }
 }

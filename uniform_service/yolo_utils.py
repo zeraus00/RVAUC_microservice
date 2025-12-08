@@ -26,6 +26,12 @@ def image_from_base64_bytes(b64str):
         image_bytes = base64.b64decode(b64str)
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+        if img is None:
+            print("Warning: Failed to decode image")
+            return None
+
+        img = cv2.resize(img, (640, 480))
         return img
     except Exception as e:
         print(f"Error decoding image: {e}")

@@ -1,3 +1,4 @@
+import asyncio
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from uniform_service.yolo_utils import image_from_base64_bytes, run_yolo_on_cv_image
@@ -33,7 +34,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
             # Decode and Run YOLO
             img = image_from_base64_bytes(frame_b64)
-            detected, boxes = run_yolo_on_cv_image(img)
+            detected, boxes = await asyncio.to_thread(run_yolo_on_cv_image, img)
 
             response = {
                 "type": "detection",
