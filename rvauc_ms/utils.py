@@ -29,6 +29,7 @@ def scan_to_dto(student_details: StudentDetails , detected: dict[str, bool]):
     for rvaucKey, detectionKey in mapper.items():
         compliance_record[rvaucKey] = detected.get(detectionKey, False)
         
+    if (not detected.__contains__("LU Logo")): compliance_record['validUpperwear'] = False
 
     return compliance_record
 
