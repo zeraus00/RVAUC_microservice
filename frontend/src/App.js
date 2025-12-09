@@ -24,7 +24,7 @@ function App() {
   const [studentName, setStudentName] = useState("Waiting for login...");
   const [evaluationResult, setEvaluationResult] = useState(null);
   const [wsStatus, setWsStatus] = useState("Disconnected");
-  const [isScanning, setIsScanning] = useState(true); // Scanning defaults to off
+  const [isScanning, setIsScanning] = useState(false); // Scanning defaults to off
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
