@@ -9,15 +9,40 @@ LabelMappers: Mapping[UniformTypes, Mapping[str, str]] = {
         "validBottoms": "Slack Pants",
         "validFootwear": "Black Shoes",
         "hasId": "id"
+    },
+    UniformTypes.type_a_female: {
+        "validUpperwear": "lu_blouse",
+        "validBottoms": "skirt",
+        "valitBelt" : "green_belt",
+        "validFootwear": "black_shoes",
+        "hasId": "id"
+    },
+    UniformTypes.buffalo: {
+        "validUpperwear": "buffalo_uniform",
+        "hasId": "id",
+    },
+    UniformTypes.cs_dept_shirt: {
+        "validUpperwear": "cs_dept_shirt_uniform",
+        "hasId": "id",
     }
 }
 
-def scan_to_dto(student_details: StudentDetails , detected: dict[str, bool]):
-    mapper = LabelMappers.get(student_details.uniform_type, {})
+# Map uniform strings to Ids for the backend
+UNIFORM_ID_MAP = {
+    "type_a_male": 1,
+    "type_a_female": 2,
+    "buffalo": 3,
+    "cs_dept_shirt": 4
+}
+
+def scan_to_dto(student_details: StudentDetails , detected: dict, detected_type: str):
+    #mapper
+    unif_enum = UniformTypes(detected_type)
+    mapper = LabelMappers.get(unif_enum, {})
 
     compliance_record: ComplianceRecord = {
         "studentNumber": student_details.student_number,
-        "uniformTypeId": 1,
+        "uniformTypeId": UNIFORM_ID_MAP.get(detected_type, 1), #dynamic Id
         "validFootwear": False,
         "hasId": True,
         "validUpperwear": False,
