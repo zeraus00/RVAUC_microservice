@@ -10,6 +10,8 @@ from rvauc_ms import services
 class YOLODetectionConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         await self.accept()
+        self.last_detected = {}
+        self.last_uniform_type = "type_a_male" # default
         print("WS: Client Connected")
 
     async def disconnect(self, close_code):
@@ -26,7 +28,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
         action = data.get("action", "frame")
 
-        # --- FLOW 1: Real-time Frame Processing ---
+        # flow 1: Real-time Frame Processing human detection first
         if action == "frame":
             frame_b64 = data.get("frame")
             if not frame_b64:
@@ -34,25 +36,24 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
             # Decode and Run YOLO
             img = image_from_base64_bytes(frame_b64)
-            detected, boxes = run_yolo_on_cv_image(img)
+            detected, boxes, status = run_yolo_on_cv_image(img)
 
             print("Last Detected: " + json.dumps(detected), flush=True)
 
-            response = {
+            await self.send(text_data=json.dumps({
                 "type": "detection",
                 "detected_items": detected, # e.g. {'polo': True, 'logo': True}
-                "boxes": boxes             # Coordinates for drawing on frontend
-            }
-            await self.send(text_data=json.dumps(response))
+                "boxes": boxes,
+                "status" : status  
+            }))
 
         # --- FLOW 2: Verification (Save to DB) ---
         elif action == "verify":
-            print ("Received verify action", flush=True)
             student_id = data.get("student_id", "")
+            # Save the snapshot to the session memory
             self.last_detected = data.get("detected_items", {})
-            print("Detected for verification: " + json.dumps(self.last_detected), flush= True)
-
-            # Send evaluation to rvauc ms server
+            
+            # Create the record and run completeness logic and Send evaluation to rvauc ms server
             print("Starting evaluation", flush=True)
             eval_data = await self.create_evaluation_entry(student_id, self.last_detected)
             print("Evaluation done", flush=True)
@@ -72,11 +73,13 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
             # detected_items = data.get("detected_items", {})
 
             # Send evaluation to rvauc ms server
-            new_record = await services.RvaucMsService.new_record(token, self.last_detected or {})
+            new_record = await services.RvaucMsService.new_record(
+                token, self.last_detected,
+                self.last_uniform_type or {})
 
             await self.send(text_data=json.dumps({
                 "type": "confirm_result",
-                "evaluation": new_record.__dict__
+                "evaluation": new_record.dict() if hasattr(new_record, 'dict') else new_record
             }))
 
     @database_sync_to_async
@@ -94,12 +97,12 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
         )
 
         # Calculate score/logic inside the model method
-        completeness, missing, score, inferred_gender = eval_obj.compute_completeness()
+        completeness, missing, score, best_match = eval_obj.compute_completeness()
         
         eval_obj.completeness = completeness
         eval_obj.missing = missing
         eval_obj.score = score
-        eval_obj.gender = inferred_gender
+        eval_obj.best_match = best_match
         eval_obj.save()
 
         return {
@@ -108,6 +111,6 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
             "completeness": eval_obj.completeness,
             "missing": eval_obj.missing,
             "score": eval_obj.score,
-            "gender": eval_obj.gender,
+            "detected_uniform": best_match,
             "created_at": eval_obj.created_at.isoformat()
         }
