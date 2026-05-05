@@ -123,7 +123,7 @@ function App() {
       } else {
         //  handle verify / confirm actions
         console.log(
-          "Detected by verification:" + JSON.stringify(data.detected_items)
+          "Detected by verification:" + JSON.stringify(data.detected_items),
         );
         console.log("Evaluation:", data.evaluation);
         setEvaluationResult(data.evaluation);
@@ -186,7 +186,7 @@ function App() {
         JSON.stringify({
           action: "frame",
           frame: base64,
-        })
+        }),
       );
     }
   }, []);
@@ -279,7 +279,7 @@ function App() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       console.log(
         "Detected items for verification:" +
-          JSON.stringify(verifySnapshotRef.current)
+          JSON.stringify(verifySnapshotRef.current),
       );
 
       wsRef.current.send(
@@ -287,7 +287,7 @@ function App() {
           action: "verify",
           student_id: studentId,
           detected_items: verifySnapshotRef.current,
-        })
+        }),
       );
 
       sendingRef.current = false;
@@ -340,7 +340,7 @@ function App() {
           action: "confirm",
           access_token: token,
           detected_items: detectedItems,
-        })
+        }),
       );
     } else {
       console.error("System not connected.");
@@ -378,10 +378,10 @@ function App() {
       setAttendanceMsg(
         res.result.attendance.isNew
           ? "Attendance Recorded"
-          : "You already have an attendance."
+          : "You already have an attendance.",
       );
     } else {
-      setAttendanceMsg("Error: " + res.message);
+      setAttendanceMsg("No attendance taken: " + res.message);
       if (res.message === "Invalid or expired token.") await handleLogOut();
     }
   };
@@ -436,14 +436,14 @@ function App() {
           isCountingDown || isVerifying
             ? "VERIFYING IN..." + countdown
             : isScanning
-            ? "SCANNING"
-            : "Ready",
+              ? "SCANNING"
+              : "Ready",
         sub:
           isCountingDown || isVerifying
             ? "Verifying detection..."
             : isScanning
-            ? "Real-time detection active."
-            : "System Idle.",
+              ? "Real-time detection active."
+              : "System Idle.",
         color: isScanning ? "#60a5fa" : "white",
       };
     };
@@ -637,15 +637,15 @@ function App() {
                       opacity: isConfirming
                         ? 1
                         : isVerifyDisabled || isConfirmed
-                        ? 0.5
-                        : 1,
+                          ? 0.5
+                          : 1,
                     }}
                   >
                     {isConfirmed
                       ? "Confirmed"
                       : isConfirming
-                      ? "Confirm"
-                      : "Verify"}
+                        ? "Confirm"
+                        : "Verify"}
                   </button>
 
                   <button
@@ -670,8 +670,10 @@ function App() {
                     color: attendanceMsg.includes("Recorded")
                       ? "#4ade80"
                       : attendanceMsg.includes("already")
-                      ? "yellow"
-                      : "white",
+                        ? "yellow"
+                        : attendanceMsg.includes("No attendance")
+                          ? "red"
+                          : "white",
                   }}
                 >
                   {attendanceMsg || "Awaiting Attendance"}
@@ -690,6 +692,12 @@ function App() {
                     {enrollment?.weekDay && enrollment?.startTimeText
                       ? `${enrollment.weekDay} | ${enrollment.startTimeText} - ${enrollment.endTimeText}`
                       : "---"}
+                  </span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Status</span>
+                  <span className="detail-value">
+                    {attendance?.status ?? "---"}
                   </span>
                 </div>
                 <div className="detail-row">
