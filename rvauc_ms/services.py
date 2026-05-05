@@ -31,14 +31,14 @@ class RvaucMsService:
     base_url = get_rvauc_ms_address()
 
     @staticmethod
-    async def new_record(token: str, detected: dict[str, bool]) -> EvaluationResponse:
+    async def new_record(token: str, detected: dict[str, bool], detected_type: str) -> EvaluationResponse:
 
         try:
             url = RvaucMsService.base_url + "/uniform-compliance/new-record"
 
             decoded = decode_rvauc_ms_jwt(token)
             student_details = StudentDetails(student_number=decoded.studentNumber)
-            record = scan_to_dto(student_details, detected)
+            record = scan_to_dto(student_details, detected, detected_type)
 
         except Exception as e:
             return EvaluationResponse(success=False, message="Failed storing new record." + str(e))
