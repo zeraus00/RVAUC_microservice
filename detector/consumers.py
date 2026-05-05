@@ -99,7 +99,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
         )
 
         # Calculate score/logic inside the model method
-        completeness, missing, score = eval_obj.compute_completeness()
+        completeness, missing, score, best_match = eval_obj.compute_completeness()
         
         eval_obj.completeness = completeness
         eval_obj.missing = missing
