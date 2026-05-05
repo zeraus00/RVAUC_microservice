@@ -74,8 +74,10 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
             # Send evaluation to rvauc ms server
             new_record = await services.RvaucMsService.new_record(
-                token, self.last_detected,
-                self.last_uniform_type or {})
+                token,
+                self.last_detected,
+                self.last_uniform_type
+                )
 
             await self.send(text_data=json.dumps({
                 "type": "confirm_result",
@@ -97,12 +99,11 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
         )
 
         # Calculate score/logic inside the model method
-        completeness, missing, score, best_match = eval_obj.compute_completeness()
+        completeness, missing, score = eval_obj.compute_completeness()
         
         eval_obj.completeness = completeness
         eval_obj.missing = missing
         eval_obj.score = score
-        eval_obj.best_match = best_match
         eval_obj.save()
 
         return {
@@ -111,6 +112,5 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
             "completeness": eval_obj.completeness,
             "missing": eval_obj.missing,
             "score": eval_obj.score,
-            "detected_uniform": best_match,
             "created_at": eval_obj.created_at.isoformat()
         }
