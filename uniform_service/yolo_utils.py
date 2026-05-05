@@ -5,20 +5,20 @@ import numpy as np
 from ultralytics import YOLO # type:ignore
 from pathlib import Path
 
-# FIX: Calculate path relative to this file (avoiding Django settings errors on import)
-# File location: project/uniform_service/yolo_utils.py -> Go up 2 levels -> project/
+# FIX: Calculate path relative to this file
 BASE_PATH = Path(__file__).resolve().parent.parent
-MODEL_PATH = os.path.join(BASE_PATH, "best.pt")
 
-try:
-    model = YOLO(MODEL_PATH)
-    print(f"SUCCESS: Loaded YOLO model from {MODEL_PATH}")
-except Exception as e:
-    model = None
-    print(f"ERROR: Could not load model at {MODEL_PATH}. Error: {e}")
+# 1. Define and Load all models into a dictionary immediately
+# Using the name 'MODELS' is clearer than 'MODEL_PATH' for loaded objects
+MODELS = {
+    "human": YOLO(os.path.join(BASE_PATH, "human_detection.pt")),
+    "type_a_male": YOLO(os.path.join(BASE_PATH, "best.pt")),
+    "type_a_female": YOLO(os.path.join(BASE_PATH, "Type_A_Female.pt")),
+    "buffalo": YOLO(os.path.join(BASE_PATH, "buffalo.pt")),
+    "cs_dept_shirt": YOLO(os.path.join(BASE_PATH, "cs_deptshirt.pt"))
+}
 
 def image_from_base64_bytes(b64str):
-    # FIX: Handle cases where frontend sends "data:image/jpeg;base64," prefix
     if "," in b64str:
         b64str = b64str.split(",")[1]
         
@@ -28,7 +28,6 @@ def image_from_base64_bytes(b64str):
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
         if img is None:
-            print("Warning: Failed to decode image")
             return None
 
         img = cv2.resize(img, (640, 480))
@@ -38,28 +37,45 @@ def image_from_base64_bytes(b64str):
         return None
 
 def run_yolo_on_cv_image(img_cv, conf_thres=0.25):
-    if model is None or img_cv is None:
-        return {}, []
+    """
+    Human detection first.
+    If human is detected, scan all uniform models.
+    """
+    if img_cv is None:
+        return {}, [], "Invalid Image"
 
-    # Run inference
-    results = model(img_cv, imgsz=640, verbose=False)[0]
-    detected = {}
-    boxes = []
-    
-    for box in results.boxes:
-        cls_id = int(box.cls)
-        conf = float(box.conf)
+    # 1. Human detection
+    human_results = MODELS["human"](img_cv, verbose=False)[0]
+    human_detected = any(box.conf >= 0.5 for box in human_results.boxes)
+
+    if not human_detected:
+        return {}, [], "No Human Detected"
+
+    # 2. Uniform scanning
+    all_detected = {}
+    all_boxes = []
+
+    uniform_keys = ["type_a_male", "type_a_female", "buffalo", "cs_dept_shirt"]
+
+    # Iterate through each uniform model
+    for key in uniform_keys:
+        current_model = MODELS[key] 
+        results = current_model(img_cv, imgsz=640, verbose=False)[0]
         
-        # Get label safely
-        if hasattr(results, "names") and cls_id in results.names:
-            label = results.names[cls_id]
-        else:
-            label = str(cls_id)
+        for box in results.boxes:
+            cls_id = int(box.cls)
+            conf = float(box.conf)
             
-        if conf >= conf_thres:
-            detected[label] = True
-            # box.xyxy is a tensor, convert to list
-            xyxy = box.xyxy[0].tolist() 
-            boxes.append({"label": label, "conf": conf, "xyxy": xyxy})
+            # Get label safely from the current model's names dictionary
+            label = results.names[cls_id] if cls_id in results.names else str(cls_id)
+                
+            if conf >= conf_thres:
+                all_detected[label] = True
+                all_boxes.append({
+                    "label": label, 
+                    "conf": conf, 
+                    "xyxy": box.xyxy[0].tolist(),
+                    "source_model": key 
+                })
             
-    return detected, boxes
+    return all_detected, all_boxes, "Success"

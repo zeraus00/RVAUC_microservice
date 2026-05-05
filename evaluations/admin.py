@@ -7,6 +7,6 @@ class StudentAdmin(admin.ModelAdmin):
 
 @admin.register(Evaluation)
 class EvaluationAdmin(admin.ModelAdmin):
-    list_display = ('id','student','student_id_raw','gender','completeness','score','forwarded','created_at')
-    list_filter = ('gender','completeness','forwarded')
+    list_display = ('id','student','student_id_raw','completeness','score','forwarded','created_at')
+    list_filter = ('completeness','forwarded')
     readonly_fields = ('created_at',)
