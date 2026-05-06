@@ -2,12 +2,12 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from pydantic import ValidationError
 from uniform_service.yolo_utils import image_from_base64_bytes, run_yolo_on_cv_image
-from schemas.ws_requests import (
+from detector.schemas.ws_requests import (
     FrameRequest,
     EvaluationRequest,
     ConfirmationRequest
 )
-from schemas.ws_responses import (
+from detector.schemas.ws_responses import (
     DetectionPayload,
     EvaluationPayload,
     ConfirmationPayload

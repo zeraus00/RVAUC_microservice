@@ -1,7 +1,7 @@
 import os
 import httpx
 from rvauc_ms.utils import scan_to_request_body
-from schemas import ApiResponse
+from rvauc_ms.schemas import ApiResponse
 
 def get_environment() -> str:
     environment = os.environ.get("ENVIRONMENT")
