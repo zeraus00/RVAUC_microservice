@@ -44,19 +44,19 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
             if isinstance(e, ValidationError):
                 error_payload = {
                     "type": "validation_error",
-                    "details": e.errors()
+                    "details": "check the values you are passing."
                 }
 
             elif isinstance(e, ValueError):
                 error_payload = {
                     "type": "value_error",
-                    "details": str(e)
+                    "details": "check the values you are passing."
                 }
 
             else:
                 error_payload = {
                     "type": "runtime_error",
-                    "details": str(e)
+                    "details": "check the values you are passing."
                 }
 
             await self.send(json.dumps({
