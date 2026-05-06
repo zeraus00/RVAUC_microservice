@@ -1,7 +1,7 @@
 import os
 import httpx
-from rvauc_ms.schemas import EvaluationResponse, StudentDetails
-from rvauc_ms.utils import decode_rvauc_ms_jwt, scan_to_dto
+from rvauc_ms.utils import scan_to_request_body
+from schemas import ApiResponse
 
 def get_environment() -> str:
     environment = os.environ.get("ENVIRONMENT")
@@ -29,28 +29,44 @@ client = httpx.AsyncClient(timeout=5.0)
 
 class RvaucMsService:
     base_url = get_rvauc_ms_address()
-
+    
     @staticmethod
-    async def new_record(token: str, detected: dict[str, bool], detected_type: str) -> EvaluationResponse:
+    async def evaluate_compliance(token: str, uniformTypeId: int, detections: dict[str, bool]):
+        url = RvaucMsService.base_url + "/enrollments/uniform-compliance/scan/evaluation"
 
-        try:
-            url = RvaucMsService.base_url + "/uniform-compliance/new-record"
-
-            decoded = decode_rvauc_ms_jwt(token)
-            student_details = StudentDetails(student_number=decoded.studentNumber)
-            record = scan_to_dto(student_details, detected, detected_type)
-
-        except Exception as e:
-            return EvaluationResponse(success=False, message="Failed storing new record." + str(e))
-        
         headers = {
             "Authorization": f"Bearer {token}",
             "Content-Type": "application/json"
         }
 
-        response = await client.post(url, json=record, headers=headers)
+        body = scan_to_request_body(uniformTypeId, detections)
 
-        parsed = EvaluationResponse(**response.json())
-        print ("success evaluating: ", parsed)
-        return parsed
+        response = await client.post(url, json=body, headers=headers)
 
+        try:
+            payload = response.json()
+        except Exception:
+            return ApiResponse(success=False, result=None, message="Invalid json response from server.")
+
+        return ApiResponse.model_validate(payload)
+
+
+    @staticmethod
+    async def confirm_compliance(token: str, uniformTypeId: int, detections: dict[str, bool]):
+        url = RvaucMsService.base_url + "/enrollments/uniform-compliance/scan/confirmation"
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+
+        body = scan_to_request_body(uniformTypeId, detections)
+
+        response = await client.post(url, json=body, headers=headers)
+
+        try:
+            payload = response.json()
+        except Exception:
+            return ApiResponse(success=False, result=None, message="Invalid json response from server.")
+
+        return ApiResponse.model_validate(payload)
