@@ -8,7 +8,6 @@ from schemas.ws_requests import (
     ConfirmationRequest
 )
 from schemas.ws_responses import (
-    WSResponse,
     DetectionPayload,
     EvaluationPayload,
     ConfirmationPayload
@@ -64,7 +63,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
             await self.send(text_data=json.dumps({
                 "type": "detection",
-                "data": DetectionPayload(
+                "result": DetectionPayload(
                     detected_items=detected,
                     boxes=boxes,
                     status=status
@@ -81,7 +80,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
             await self.send(json.dumps({
                 "type": "evaluation",
-                "data": EvaluationPayload(
+                "result": EvaluationPayload(
                     evaluation_result=evaluation_result
                 ).model_dump(),
             }))
@@ -96,7 +95,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
 
             await self.send(json.dumps({
                 "type": "confirmation",
-                "data": ConfirmationPayload(
+                "result": ConfirmationPayload(
                     confirmation_result=confirmation_result
                 ).model_dump(),
             }))

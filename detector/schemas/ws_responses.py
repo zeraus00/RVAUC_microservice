@@ -1,11 +1,5 @@
 from pydantic import BaseModel
-from typing import Any, Optional, Literal
-
-
-class WSResponse(BaseModel):
-    type: str
-    data: Optional[Any] = None
-    error: Optional[Any] = None
+from typing import Any
 
 class DetectionPayload(BaseModel):
     detected_items: dict[str, bool]
