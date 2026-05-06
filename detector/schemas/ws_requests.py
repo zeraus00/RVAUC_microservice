@@ -21,9 +21,6 @@ class EvaluationRequest(BaseModel):
     @field_validator("detected_items")
     @classmethod
     def validate_detected_items(cls, v):
-        if not v:
-            raise ValueError("detected_items cannot be empty")
-
         for key, value in v.items():
             if not isinstance(key, str) or not key.strip():
                 raise ValueError("Invalid detection label key")
@@ -42,9 +39,6 @@ class ConfirmationRequest(BaseModel):
     @field_validator("detected_items")
     @classmethod
     def validate_detected_items(cls, v):
-        if not v:
-            raise ValueError("detected_items cannot be empty")
-
         for key, value in v.items():
             if not isinstance(key, str) or not key.strip():
                 raise ValueError("Invalid detection label key")
