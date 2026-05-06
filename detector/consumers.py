@@ -40,14 +40,20 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
                 raise ValueError("Invalid action")
 
         except (json.JSONDecodeError, ValidationError, ValueError) as e:
-            message = str(e)
-
             if isinstance(e, ValidationError):
-                message = e.errors()
+                message = {
+                    "kind": "validation_error",
+                    "details": e.errors()
+                }
+            else:
+                message = {
+                    "kind": "runtime_error",
+                    "details": str(e)
+                }
 
             await self.send(json.dumps({
                 "type": "error",
-                "message": message
+                "error": message
             }))
             return
 
