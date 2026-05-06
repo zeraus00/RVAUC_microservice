@@ -99,34 +99,34 @@ function App() {
     };
 
     ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+      const { type, result } = JSON.parse(event.data);
 
-      if (data.type === "detection" && !isVerifying) {
+      if (type === "detection" && !isVerifying) {
         sendingRef.current = false;
 
-        // &&
-        //   data.detected_items &&
-        //   Object.keys(data.detected_items).length > 0
+        const { detected_items, boxes, status } = result;
+
         if (
           !isVerifying &&
-          data.detected_items &&
-          Object.keys(data.detected_items).length > 0
+          detected_items &&
+          Object.keys(detected_items).length > 0
         ) {
-          console.log("Last detected: " + JSON.stringify(data.detected_items));
-          verifySnapshotRef.current = data.detected_items;
-          setDetectedItems(data.detected_items);
+          console.log("Last detected: " + JSON.stringify(detected_items));
+          verifySnapshotRef.current = detected_items;
+          setDetectedItems(detected_items);
         }
 
         if (canvasRef.current && videoRef.current) {
-          drawBoxes(data.boxes);
+          drawBoxes(boxes);
         }
-      } else {
-        //  handle verify / confirm actions
-        console.log(
-          "Detected by verification:" + JSON.stringify(data.detected_items),
-        );
-        console.log("Evaluation:", data.evaluation);
-        setEvaluationResult(data.evaluation);
+      } else if (type === "evaluation") {
+        console.log("Evaluated: " + JSON.stringify(result));
+        setEvaluationResult(result.evaluation_result);
+        setIsScanning(false);
+        clearCanvas();
+      } else if (type === "confirmation") {
+        console.log("Confirmed: " + JSON.stringify(result));
+        setEvaluationResult(result.confirmation_result);
         setIsScanning(false); // Stop scanning on result
         clearCanvas();
       }
@@ -284,9 +284,10 @@ function App() {
 
       wsRef.current.send(
         JSON.stringify({
-          action: "verify",
-          student_id: studentId,
+          action: "evaluation",
+          uniform_type_id: 1, //  replace with user input
           detected_items: verifySnapshotRef.current,
+          access_token: token,
         }),
       );
 
@@ -337,9 +338,10 @@ function App() {
       setIsConfirmed(true);
       wsRef.current.send(
         JSON.stringify({
-          action: "confirm",
+          action: "confirmation",
+          uniform_type_id: 1,
+          detected_items: verifySnapshotRef.current,
           access_token: token,
-          detected_items: detectedItems,
         }),
       );
     } else {
@@ -398,36 +400,28 @@ function App() {
       }
 
       if (evaluationResult) {
-        if (!isConfirmed) {
-          //  return type of the yolo microservice
-          const { completeness, missing } = evaluationResult;
-          return {
-            text: completeness ? "COMPLETE" : "INCOMPLETE",
-            sub: completeness
-              ? "Uniform Compliant"
-              : "Missing: " + missing.join(", "),
-            color: completeness ? "#4ade80" : "#f87171",
-          };
-        }
-
-        //  return type of rvaucms
-        const { success, message } = evaluationResult;
+        const { success } = evaluationResult;
 
         if (!success)
           return {
             text: "ERROR",
-            sub: "Failed evaluating: " + message,
+            sub: "Failed evaluating: " + evaluationResult.message,
             color: "#f87171",
           };
 
-        const { isCompliant, reasons } = evaluationResult.result;
+        //  return type of rvaucms
 
+        const { evaluation } = evaluationResult.result;
+
+        const { groups, labels } = evaluation.missing;
+
+        const isComplete = groups.length === 0 && labels.length === 0;
         return {
-          text: isCompliant ? "COMPLETE" : "INCOMPLETE",
-          sub: isCompliant
+          text: isComplete ? "COMPLETE" : "INCOMPLETE",
+          sub: isComplete
             ? "Uniform Compliant"
-            : "Reasons: " + reasons?.join(", "),
-          color: isCompliant ? "#4ade80" : "#f87171",
+            : "Reasons: missing " + [...groups, ...labels].join(", "),
+          color: isComplete ? "#4ade80" : "#f87171",
         };
       }
 
