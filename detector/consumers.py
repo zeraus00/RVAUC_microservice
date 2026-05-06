@@ -76,7 +76,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
             detected = data.detected_items
             token: str = data.access_token
             
-            evaluation_result = services.RvaucMsService.evaluate_compliance(token, uniform_type_id, detected)
+            evaluation_result = await services.RvaucMsService.evaluate_compliance(token, uniform_type_id, detected)
 
             await self.send(json.dumps({
                 "type": "evaluation",
@@ -91,7 +91,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
             detected = data.detected_items
             token: str = data.access_token
             
-            confirmation_result = services.RvaucMsService.confirm_compliance(token, uniform_type_id, detected)
+            confirmation_result = await services.RvaucMsService.confirm_compliance(token, uniform_type_id, detected)
 
             await self.send(json.dumps({
                 "type": "confirmation",
