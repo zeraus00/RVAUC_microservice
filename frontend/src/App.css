@@ -394,3 +394,86 @@ body, html, #root {
 .logout-button:hover {
   background: #cc0000be;
 }
+
+/* DROPDOWN WRAPPER */
+.uniform-dropdown {
+  margin-top: 18px;
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+/* LABEL */
+.uniform-label {
+  display: block;
+  margin-bottom: 10px;
+  text-align: center;
+
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+
+  color: #ffffff;
+}
+
+/* SELECT */
+.uniform-select {
+  width: 100%;
+  padding: 14px 16px;
+
+  border-radius: 14px;
+  border: 1px solid rgba(0, 255, 170, 0.15);
+
+  background: linear-gradient(
+    135deg,
+    rgba(13, 42, 32, 0.95),
+    rgba(18, 58, 43, 0.95)
+  );
+
+  color: #ffffff;
+
+  font-size: 15px;
+  font-weight: 500;
+
+  outline: none;
+  cursor: pointer;
+
+  transition: all 0.25s ease;
+
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.04),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+
+  /* remove native style */
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* custom arrow */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E");
+
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 18px;
+
+  padding-right: 45px;
+}
+
+/* HOVER */
+.uniform-select:hover {
+  border-color: rgba(0, 255, 170, 0.4);
+}
+
+/* FOCUS */
+.uniform-select:focus {
+  border-color: #00ffaa;
+
+  box-shadow:
+    0 0 0 3px rgba(0, 255, 170, 0.15),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* OPTIONS */
+.uniform-select option {
+  background: #123524;
+  color: #ffffff;
+}

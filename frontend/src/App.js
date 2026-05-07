@@ -32,9 +32,18 @@ function App() {
   const [countdown, setCountdown] = useState(null);
 
   //  Attendance
-  const [enrollment, setEnrollment] = useState(null);
-  const [attendance, setAttendance] = useState(null);
-  const [attendanceMsg, setAttendanceMsg] = useState("");
+  // const [enrollment, setEnrollment] = useState(null);
+  // const [attendance, setAttendance] = useState(null);
+  // const [attendanceMsg, setAttendanceMsg] = useState("");
+
+  const [selectedUniformType, setSelectedUniformType] = useState("");
+
+  // DROPDOWN OPTIONS (TEMPORARY - ideally should be fetched from backend)
+  const uniformTypes = [
+    { id: 1, name: "Type A" },
+    { id: 2, name: "Department Shirt" },
+    { id: 3, name: "Foundation Shirt" },
+  ];
 
   //dropdown profile
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -370,23 +379,23 @@ function App() {
     }
   };
 
-  const handleTakeAttendance = async () => {
-    if (!token) return;
-    const res = await takeAttendance(token);
+  // const handleTakeAttendance = async () => {
+  //   if (!token) return;
+  //   const res = await takeAttendance(token);
 
-    if (res.success) {
-      setAttendance(res.result.attendance);
-      setEnrollment(res.result.enrollment);
-      setAttendanceMsg(
-        res.result.attendance.isNew
-          ? "Attendance Recorded"
-          : "You already have an attendance.",
-      );
-    } else {
-      setAttendanceMsg("No attendance taken: " + res.message);
-      if (res.message === "Invalid or expired token.") await handleLogOut();
-    }
-  };
+  //   if (res.success) {
+  //     setAttendance(res.result.attendance);
+  //     setEnrollment(res.result.enrollment);
+  //     setAttendanceMsg(
+  //       res.result.attendance.isNew
+  //         ? "Attendance Recorded"
+  //         : "You already have an attendance.",
+  //     );
+  //   } else {
+  //     setAttendanceMsg("No attendance taken: " + res.message);
+  //     if (res.message === "Invalid or expired token.") await handleLogOut();
+  //   }
+  // };
 
   // --- Render Helpers ---
   useEffect(() => {
@@ -605,123 +614,76 @@ function App() {
                 flexWrap: "wrap",
               }}
             >
-              {/* EVALUATION BOX (Left Column in the inner wrapper) */}
-              <div className="eval-box" style={{ flex: 1 }}>
-                <div className="eval-icon">⚙️</div>
-                <p className="eval-title">EVALUATION RESULT</p>
-
-                <p
-                  className="eval-result"
-                  style={{ color: statusDisplay.color }}
-                >
-                  {statusDisplay.text}
-                </p>
-
-                <p className="eval-sub">{statusDisplay.sub}</p>
-
                 {/* BUTTONS (VERIFY/RETRY/CONFIRM) - Kept with the Evaluation result */}
-                <div className="button-row">
-                  <button
-                    className="confirm-btn"
-                    onClick={isConfirming ? handleConfirm : handleVerify}
-                    disabled={
-                      isConfirming ? false : isVerifyDisabled || isConfirmed
-                    }
-                    style={{
-                      opacity: isConfirming
-                        ? 1
-                        : isVerifyDisabled || isConfirmed
-                          ? 0.5
-                          : 1,
-                    }}
+                <div className="eval-box" style={{ flex: 1 }}>
+                  <div className="eval-icon">⚙️</div>
+                  <p className="eval-title">EVALUATION RESULT</p>
+
+                  <p
+                    className="eval-result"
+                    style={{ color: statusDisplay.color }}
                   >
-                    {isConfirmed
-                      ? "Confirmed"
-                      : isConfirming
-                        ? "Confirm"
-                        : "Verify"}
-                  </button>
+                    {statusDisplay.text}
+                  </p>
 
-                  <button
-                    className="retry-btn"
-                    onClick={handleRetry}
-                    disabled={isRetryDisabled}
-                    style={{ opacity: isRetryDisabled ? 0.5 : 1 }}
-                  >
-                    Retry
-                  </button>
-                </div>
-              </div>
+                  <p className="eval-sub">{statusDisplay.sub}</p>
 
-              {/* ATTENDANCE CARD (Right Column in the inner wrapper) */}
-              <div className="eval-box" style={{ flex: 1 }}>
-                <div className="eval-icon">🗓️</div>
-                <p className="eval-title">ATTENDANCE STATUS</p>
+                  {/* UNIFORM TYPE DROPDOWN */}
+                    <div className="uniform-dropdown">
+                      <label htmlFor="uniformType" className="uniform-label">
+                        Uniform Type
+                      </label>
 
-                <p
-                  className="eval-result"
-                  style={{
-                    color: attendanceMsg.includes("Recorded")
-                      ? "#4ade80"
-                      : attendanceMsg.includes("already")
-                        ? "yellow"
-                        : attendanceMsg.includes("No attendance")
-                          ? "red"
-                          : "white",
-                  }}
-                >
-                  {attendanceMsg || "Awaiting Attendance"}
-                </p>
+                      <select
+                        id="uniformType"
+                        className="uniform-select"
+                        value={selectedUniformType}
+                        onChange={(e) => setSelectedUniformType(e.target.value)}
+                      >
+                        <option value="">Select uniform type</option>
 
-                {/* Enrollment details are moved into styled detail rows */}
-                <div className="detail-row">
-                  <span className="detail-label">Current Class</span>
-                  <span className="detail-value">
-                    {enrollment?.courseCode || "---"}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Time / Day</span>
-                  <span className="detail-value">
-                    {enrollment?.weekDay && enrollment?.startTimeText
-                      ? `${enrollment.weekDay} | ${enrollment.startTimeText} - ${enrollment.endTimeText}`
-                      : "---"}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Status</span>
-                  <span className="detail-value">
-                    {attendance?.status ?? "---"}
-                  </span>
-                </div>
-                <div className="detail-row">
-                  <span className="detail-label">Instructor</span>
-                  <span className="detail-value">
-                    {enrollment?.professor?.firstName &&
-                    enrollment?.professor?.surname
-                      ? `${enrollment.professor.firstName} ${enrollment.professor.surname}`
-                      : "---"}
-                  </span>
-                </div>
+                        {uniformTypes.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                {/* TAKE ATTENDANCE BUTTON */}
-                <div className="button-row" style={{ marginTop: "10px" }}>
-                  <button
-                    className="login-btn"
-                    onClick={handleTakeAttendance}
-                    disabled={!token}
-                    style={{
-                      opacity: token ? 1 : 0.5,
-                      width: "100%",
-                      backgroundColor: "#22c55e",
-                    }}
-                  >
-                    RECORD ATTENDANCE
-                  </button>
+                  {/* BUTTONS (VERIFY/RETRY/CONFIRM) */}
+                  <div className="button-row">
+                    <button
+                      className="confirm-btn"
+                      onClick={isConfirming ? handleConfirm : handleVerify}
+                      disabled={
+                        isConfirming ? false : isVerifyDisabled || isConfirmed
+                      }
+                      style={{
+                        opacity: isConfirming
+                          ? 1
+                          : isVerifyDisabled || isConfirmed
+                            ? 0.5
+                            : 1,
+                      }}
+                    >
+                      {isConfirmed
+                        ? "Confirmed"
+                        : isConfirming
+                          ? "Confirm"
+                          : "Verify"}
+                    </button>
+
+                    <button
+                      className="retry-btn"
+                      onClick={handleRetry}
+                      disabled={isRetryDisabled}
+                      style={{ opacity: isRetryDisabled ? 0.5 : 1 }}
+                    >
+                      Retry
+                    </button>
+                  </div>
                 </div>
-              </div>
             </div>
-            {/* END: WRAPPER FOR EVALUATION AND ATTENDANCE */}
 
             {/* INPUT AND LOGIN (Remain at the bottom) */}
             <input
