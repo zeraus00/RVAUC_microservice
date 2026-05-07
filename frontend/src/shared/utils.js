@@ -22,7 +22,7 @@ sessionBrokerClient.interceptors.request.use(
   },
   (err) => {
     Promise.reject(err);
-  }
+  },
 );
 
 /**
@@ -59,7 +59,7 @@ export const manualLogIn = async (studentNumber) => {
     .then((response) => response.data)
     .catch(
       (error) =>
-        error.response?.data ?? { success: false, message: error.message }
+        error.response?.data ?? { success: false, message: error.message },
     );
 
   return decodeToken(data);
@@ -73,7 +73,7 @@ export const sessionBroker = async () => {
     .then((response) => response.data)
     .catch(
       (error) =>
-        error.response?.data ?? { success: false, message: error.message }
+        error.response?.data ?? { success: false, message: error.message },
     );
 
   return decodeToken(data);
@@ -87,7 +87,7 @@ export const logOut = async () => {
     .then((response) => response.data)
     .catch(
       (error) =>
-        error.response?.data ?? { success: false, message: error.message }
+        error.response?.data ?? { success: false, message: error.message },
     );
 };
 
@@ -107,7 +107,7 @@ attendanceClient.interceptors.request.use(
   },
   (err) => {
     Promise.reject(err);
-  }
+  },
 );
 
 export const takeAttendance = async (token) => {
@@ -123,11 +123,25 @@ export const takeAttendance = async (token) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     )
     .then((result) => result.data) //  * { enrollment, attendance }
     .catch(
       (error) =>
-        error.response?.data ?? { success: false, message: error.message }
+        error.response?.data ?? { success: false, message: error.message },
     );
+};
+
+const complianceClient = axios.create({
+  baseURL: "http://localhost:2620/enrollments/uniform-compliance",
+  withCredentials: true,
+});
+
+export const getAllowedUniforms = async (token) => {
+  return await complianceClient
+    .get("/allowed-uniforms", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    .then((r) => r.data)
+    .catch((e) => e.response?.data ?? { success: false, message: e.message });
 };
