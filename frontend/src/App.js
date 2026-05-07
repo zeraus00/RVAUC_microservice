@@ -1,11 +1,12 @@
 import "./App.css";
 // FIX 1: Ensure useRef, useState, and useCallback are imported
-import { useEffect, useState, useRef, useCallback, useReducer } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import {
   manualLogIn,
   sessionBroker,
   logOut,
   takeAttendance,
+  getAllowedUniforms,
 } from "./shared/utils";
 
 function App() {
@@ -36,14 +37,8 @@ function App() {
   // const [attendance, setAttendance] = useState(null);
   // const [attendanceMsg, setAttendanceMsg] = useState("");
 
-  const [selectedUniformType, setSelectedUniformType] = useState("");
-
-  // DROPDOWN OPTIONS (TEMPORARY - ideally should be fetched from backend)
-  const uniformTypes = [
-    { id: 1, name: "Type A" },
-    { id: 2, name: "Department Shirt" },
-    { id: 3, name: "Foundation Shirt" },
-  ];
+  const [selectedUniformType, setSelectedUniformType] = useState(null);
+  const [uniformTypes, setUniformTypes] = useState([]);
 
   //dropdown profile
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -97,6 +92,25 @@ function App() {
     };
   }, [token]);
 
+  //  --- 0.5. Allowed uniform types ---
+  useEffect(() => {
+    if (!token || token.length === 0) {
+      setUniformTypes([]);
+      return;
+    }
+
+    const loadUniforms = async (tkn) => {
+      const response = await getAllowedUniforms(tkn);
+
+      if (response.success) {
+        setUniformTypes(response.result.allowedUniforms);
+        return;
+      }
+    };
+
+    loadUniforms(token);
+  }, [token]);
+
   // --- 1. WebSocket Connection ---
   useEffect(() => {
     const ws = new WebSocket(WS_URL);
@@ -113,7 +127,7 @@ function App() {
       if (type === "detection" && !isVerifying) {
         sendingRef.current = false;
 
-        const { detected_items, boxes, status } = result;
+        const { detected_items, boxes } = result;
 
         if (
           !isVerifying &&
@@ -146,7 +160,7 @@ function App() {
     return () => {
       if (ws.readyState === WebSocket.OPEN) ws.close();
     };
-  }, []);
+  }, [isVerifying]);
 
   // --- 2. Start Camera (FIXED to use ref) ---
   useEffect(() => {
@@ -294,7 +308,7 @@ function App() {
       wsRef.current.send(
         JSON.stringify({
           action: "evaluation",
-          uniform_type_id: 1, //  replace with user input
+          uniform_type_id: selectedUniformType, //  replace with user input
           detected_items: verifySnapshotRef.current,
           access_token: token,
         }),
@@ -348,7 +362,7 @@ function App() {
       wsRef.current.send(
         JSON.stringify({
           action: "confirmation",
-          uniform_type_id: 1,
+          uniform_type_id: selectedUniformType,
           detected_items: verifySnapshotRef.current,
           access_token: token,
         }),
@@ -614,75 +628,75 @@ function App() {
                 flexWrap: "wrap",
               }}
             >
-                {/* BUTTONS (VERIFY/RETRY/CONFIRM) - Kept with the Evaluation result */}
-                <div className="eval-box" style={{ flex: 1 }}>
-                  <div className="eval-icon">⚙️</div>
-                  <p className="eval-title">EVALUATION RESULT</p>
+              {/* BUTTONS (VERIFY/RETRY/CONFIRM) - Kept with the Evaluation result */}
+              <div className="eval-box" style={{ flex: 1 }}>
+                <div className="eval-icon">⚙️</div>
+                <p className="eval-title">EVALUATION RESULT</p>
 
-                  <p
-                    className="eval-result"
-                    style={{ color: statusDisplay.color }}
+                <p
+                  className="eval-result"
+                  style={{ color: statusDisplay.color }}
+                >
+                  {statusDisplay.text}
+                </p>
+
+                <p className="eval-sub">{statusDisplay.sub}</p>
+
+                {/* UNIFORM TYPE DROPDOWN */}
+                <div className="uniform-dropdown">
+                  <label htmlFor="uniformType" className="uniform-label">
+                    Uniform Type
+                  </label>
+
+                  <select
+                    id="uniformType"
+                    className="uniform-select"
+                    value={selectedUniformType}
+                    onChange={(e) => setSelectedUniformType(e.target.value)}
                   >
-                    {statusDisplay.text}
-                  </p>
+                    <option value="">Select uniform type</option>
 
-                  <p className="eval-sub">{statusDisplay.sub}</p>
-
-                  {/* UNIFORM TYPE DROPDOWN */}
-                    <div className="uniform-dropdown">
-                      <label htmlFor="uniformType" className="uniform-label">
-                        Uniform Type
-                      </label>
-
-                      <select
-                        id="uniformType"
-                        className="uniform-select"
-                        value={selectedUniformType}
-                        onChange={(e) => setSelectedUniformType(e.target.value)}
-                      >
-                        <option value="">Select uniform type</option>
-
-                        {uniformTypes.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                  {/* BUTTONS (VERIFY/RETRY/CONFIRM) */}
-                  <div className="button-row">
-                    <button
-                      className="confirm-btn"
-                      onClick={isConfirming ? handleConfirm : handleVerify}
-                      disabled={
-                        isConfirming ? false : isVerifyDisabled || isConfirmed
-                      }
-                      style={{
-                        opacity: isConfirming
-                          ? 1
-                          : isVerifyDisabled || isConfirmed
-                            ? 0.5
-                            : 1,
-                      }}
-                    >
-                      {isConfirmed
-                        ? "Confirmed"
-                        : isConfirming
-                          ? "Confirm"
-                          : "Verify"}
-                    </button>
-
-                    <button
-                      className="retry-btn"
-                      onClick={handleRetry}
-                      disabled={isRetryDisabled}
-                      style={{ opacity: isRetryDisabled ? 0.5 : 1 }}
-                    >
-                      Retry
-                    </button>
-                  </div>
+                    {uniformTypes.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {/* BUTTONS (VERIFY/RETRY/CONFIRM) */}
+                <div className="button-row">
+                  <button
+                    className="confirm-btn"
+                    onClick={isConfirming ? handleConfirm : handleVerify}
+                    disabled={
+                      isConfirming ? false : isVerifyDisabled || isConfirmed
+                    }
+                    style={{
+                      opacity: isConfirming
+                        ? 1
+                        : isVerifyDisabled || isConfirmed
+                          ? 0.5
+                          : 1,
+                    }}
+                  >
+                    {isConfirmed
+                      ? "Confirmed"
+                      : isConfirming
+                        ? "Confirm"
+                        : "Verify"}
+                  </button>
+
+                  <button
+                    className="retry-btn"
+                    onClick={handleRetry}
+                    disabled={isRetryDisabled}
+                    style={{ opacity: isRetryDisabled ? 0.5 : 1 }}
+                  >
+                    Retry
+                  </button>
+                </div>
+              </div>
             </div>
 
             {/* INPUT AND LOGIN (Remain at the bottom) */}
