@@ -152,6 +152,8 @@ function App() {
         setEvaluationResult(result.confirmation_result);
         setIsScanning(false); // Stop scanning on result
         clearCanvas();
+      } else {
+        console.log(JSON.stringify({ type, result }));
       }
     };
 
@@ -295,7 +297,6 @@ function App() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
     setIsCountingDown(false);
-
     sendingRef.current = true;
     setIsVerifying(true);
 
