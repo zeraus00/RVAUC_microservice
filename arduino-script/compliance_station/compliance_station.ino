@@ -18,7 +18,7 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 // WIFI CONFIG
 const char* ssid = "Chlaus";
-const char* password = "chlaus' iphone";
+const char* password = "chlaus'-iphone";
 
 // RVAUCMS API URL
 String apiURL = "http://172.20.10.14:2620/session-broker/sign-in";
@@ -72,13 +72,13 @@ void loop() {
 
   Serial.println("Card UID: " + uid);
 
-  sendToDjango(uid);
+  sendToServer(uid);
 
   rfid.PICC_HaltA();
 }
 
 // -------------------- SEND TO DJANGO --------------------
-void sendToDjango(String uid) {
+void sendToServer(String uid) {
   if(WiFi.status() != WL_CONNECTED){
     connectWiFi();
   }
