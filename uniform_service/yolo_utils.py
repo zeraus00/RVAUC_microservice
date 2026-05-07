@@ -55,27 +55,25 @@ def run_yolo_on_cv_image(img_cv, conf_thres=0.25):
     all_detected = {}
     all_boxes = []
 
-    uniform_keys = ["type_a_male", "type_a_female", "buffalo", "cs_dept_shirt"]
-
     # Iterate through each uniform model
-    for key in uniform_keys:
-        current_model = MODELS[key] 
-        results = current_model(img_cv, imgsz=640, verbose=False)[0]
+    key = "type_a_male"
+    current_model = MODELS[key] 
+    results = current_model(img_cv, imgsz=640, verbose=False)[0]
+    
+    for box in results.boxes:
+        cls_id = int(box.cls)
+        conf = float(box.conf)
         
-        for box in results.boxes:
-            cls_id = int(box.cls)
-            conf = float(box.conf)
+        # Get label safely from the current model's names dictionary
+        label = results.names[cls_id] if cls_id in results.names else str(cls_id)
             
-            # Get label safely from the current model's names dictionary
-            label = results.names[cls_id] if cls_id in results.names else str(cls_id)
-                
-            if conf >= conf_thres:
-                all_detected[label] = True
-                all_boxes.append({
-                    "label": label, 
-                    "conf": conf, 
-                    "xyxy": box.xyxy[0].tolist(),
-                    "source_model": key 
-                })
-            
+        if conf >= conf_thres:
+            all_detected[label] = True
+            all_boxes.append({
+                "label": label, 
+                "conf": conf, 
+                "xyxy": box.xyxy[0].tolist(),
+                "source_model": key 
+            })
+        
     return all_detected, all_boxes, "Success"
