@@ -12,10 +12,7 @@ BASE_PATH = Path(__file__).resolve().parent.parent
 # Using the name 'MODELS' is clearer than 'MODEL_PATH' for loaded objects
 MODELS = {
     "human": YOLO(os.path.join(BASE_PATH, "human_detection.pt")),
-    "type_a_male": YOLO(os.path.join(BASE_PATH, "best.pt")),
-    "type_a_female": YOLO(os.path.join(BASE_PATH, "Type_A_Female.pt")),
-    "buffalo": YOLO(os.path.join(BASE_PATH, "buffalo.pt")),
-    "cs_dept_shirt": YOLO(os.path.join(BASE_PATH, "cs_deptshirt.pt"))
+    "uniform": YOLO(os.path.join(BASE_PATH, "Yolo_Uniform_Model.pt"))
 }
 
 def image_from_base64_bytes(b64str):
@@ -56,7 +53,7 @@ def run_yolo_on_cv_image(img_cv, conf_thres=0.25):
     # 2. Uniform scanning
 
     # Iterate through each uniform model
-    key = "type_a_male"
+    key = "uniform"
     current_model = MODELS[key] 
     results = current_model(img_cv, imgsz=640, verbose=False)[0]
     
