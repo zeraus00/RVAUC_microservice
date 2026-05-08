@@ -11,7 +11,6 @@ class EvaluationSerializer(serializers.ModelSerializer):
             'student',
             'student_id',
             'student_id_raw',
-            'gender',
             'detected_items',
             'completeness',
             'missing',
@@ -22,7 +21,6 @@ class EvaluationSerializer(serializers.ModelSerializer):
         read_only_fields = [
             'id',
             'student',
-            'gender',
             'completeness',
             'missing',
             'score',
