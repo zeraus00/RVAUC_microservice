@@ -37,23 +37,23 @@ def image_from_base64_bytes(b64str):
         return None
 
 def run_yolo_on_cv_image(img_cv, conf_thres=0.25):
+    all_detected: dict[str, bool] = {}
+    all_boxes = []
     """
     Human detection first.
     If human is detected, scan all uniform models.
     """
     if img_cv is None:
-        return {}, [], "Invalid Image"
+        return all_detected, all_boxes, "Invalid Image"
 
     # 1. Human detection
     human_results = MODELS["human"](img_cv, verbose=False)[0]
     human_detected = any(box.conf >= 0.5 for box in human_results.boxes)
 
     if not human_detected:
-        return {}, [], "No Human Detected"
+        return all_detected, all_boxes, "No Human Detected"
 
     # 2. Uniform scanning
-    all_detected = {}
-    all_boxes = []
 
     # Iterate through each uniform model
     key = "type_a_male"

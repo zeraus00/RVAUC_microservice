@@ -14,7 +14,7 @@ function App() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const wsRef = useRef(null);
-  const verifySnapshotRef = useRef(null);
+  const verifySnapshotRef = useRef({});
 
   // --- State ---
   const [detectedItems, setDetectedItems] = useState({});
@@ -56,7 +56,7 @@ function App() {
 
   // --- Constants ---
   const WS_URL = "ws://localhost:8000/ws/detect/";
-  const FRAME_RATE = 200; // 5 FPS
+  const FRAME_RATE = 100; // 5 FPS
 
   // --- 0. Session Polling ---
   useEffect(() => {
@@ -162,7 +162,7 @@ function App() {
     return () => {
       if (ws.readyState === WebSocket.OPEN) ws.close();
     };
-  }, [isVerifying]);
+  }, []);
 
   // --- 2. Start Camera (FIXED to use ref) ---
   useEffect(() => {

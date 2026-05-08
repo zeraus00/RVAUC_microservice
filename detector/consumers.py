@@ -40,6 +40,7 @@ class YOLODetectionConsumer(AsyncWebsocketConsumer):
                 raise ValueError("Invalid action")
 
         except (json.JSONDecodeError, ValidationError, ValueError) as e:
+            print("Error: " + str(e))
 
             if isinstance(e, ValidationError):
                 error_payload = {
