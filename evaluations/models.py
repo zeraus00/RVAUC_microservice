@@ -33,9 +33,9 @@ class Evaluation(models.Model):
         # requirements components for each specific model
         REQUIREMENTS = {
             "type_a_male" : ["Polo", "Slack Pants", "Black Shoes"],
-            "type_a_female" : ["black_shoes", "green_belt", "lu_blouse", "lu_logo", "skirt"],
-            "buffalo" : ["buffalo_uniform"],
-            "cs_dept_shirt" : ["cs_dept_shirt_uniform"]
+            "type_a_female" : ["Black Shoes", "Belt", "Blouse", "LU Logo", "Skirt"],
+            "buffalo" : ["Buffalo Uniform"],
+            "cs_dept_shirt" : ["CS Dept Shirt"]
         }
 
         best_match = "type_a_male"
@@ -46,7 +46,7 @@ class Evaluation(models.Model):
             current_match_count = 0
             for item in components:
                 if detections.get(item) is True:
-                    if item in ["buffalo_uniform", "cs_dept_shirt_uniform"]:
+                    if item in ["Buffalo Uniform", "CS Dept Shirt", "LU Logo", "Blouse"]:
                         current_match_count += 10
                     else:
                         current_match_count += 1
